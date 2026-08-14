@@ -8,7 +8,6 @@
 
 #include "OLED_UI.h"
 #include "OLED_UI_MenuData.h"
-#include "misc.h"
 #include "OLED.h"
 
 void OLED_UI_init(void);

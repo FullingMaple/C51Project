@@ -34,7 +34,7 @@
           <bCustSvd>0</bCustSvd>
           <UseEnv>0</UseEnv>
           <BinPath></BinPath>
-          <IncludePath>.\src\inc;.\src\ui\Driver\Hardware_Driver;.\src\ui\Driver\Software_Driver;D:\APP\C51V961\C51\INC;D:\APP\C51V961\C51\INC\STC</IncludePath>
+          <IncludePath>.\src\inc;.\src\ui\Driver\Hardware_Driver;.\src\ui\Driver\Software_Driver;.\src\ui\OLED_UI;D:\APP\C51V961\C51\INC;D:\APP\C51V961\C51\INC\STC</IncludePath>
           <LibPath></LibPath>
           <RegisterFilePath>STC\</RegisterFilePath>
           <DBRegisterFilePath>STC\</DBRegisterFilePath>
@@ -324,7 +324,7 @@
               <MiscControls></MiscControls>
               <Define>PRINTF_LARGE</Define>
               <Undefine></Undefine>
-              <IncludePath>.\src\inc;.\src\ui\Driver\Hardware_Driver;.\src\ui\Driver\Software_Driver;D:\APP\C51V961\C51\INC;D:\APP\C51V961\C51\INC\STC</IncludePath>
+              <IncludePath>.\src\inc;.\src\ui\Driver\Hardware_Driver;.\src\ui\Driver\Software_Driver;.\src\ui\OLED_UI;D:\APP\C51V961\C51\INC;D:\APP\C51V961\C51\INC\STC</IncludePath>
             </VariousControls>
           </C51>
           <Ax51>
@@ -415,11 +415,6 @@
               <FileName>OLED_UI_MenuData.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\ui\OLED_UI\OLED_UI_MenuData.c</FilePath>
-            </File>
-            <File>
-              <FileName>misc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\src\ui\OLED_UI\misc.c</FilePath>
             </File>
           </Files>
         </Group>

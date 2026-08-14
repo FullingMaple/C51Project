@@ -58,9 +58,14 @@ void Key_Init(void)
     ADC_CONTR = 0x80;               /* 使能 ADC 模块 */
 }
 
-/* 查询式单次 12 位 ADC 转换（channel = 0~15） */
+/* 查询式单次 12 位 ADC 转换（channel = 0~15）
+ * 在 20ms 中断内调用：必须带超时，否则 ADC 异常会死等卡死整个中断（屏幕黑屏） */
 static uint16_t Get_ADC12bitResult(uint8_t channel)
 {
+    uint16_t timeout = 0;
+
+    if(!(ADC_CONTR & 0x80)) return 0xFFFF;  /* ADC 未使能（Key_Init 尚未执行）直接返回 */
+
     ADC_RES = 0;
     ADC_RESL = 0;
     ADC_CONTR = (ADC_CONTR & 0xF0) | 0x40 | channel;    /* 启动转换 */
@@ -68,8 +73,11 @@ static uint16_t Get_ADC12bitResult(uint8_t channel)
     _nop_();
     _nop_();
     _nop_();
-    while((ADC_CONTR & 0x20) == 0);     /* 等待转换完成 */
-    ADC_CONTR &= ~0x20;                 /* 清完成标志 */
+    while((ADC_CONTR & 0x20) == 0)          /* 等待转换完成（超时保护） */
+    {
+        if(++timeout > 1000) return 0xFFFF; /* ~0.5ms 上限，ADC 正常 20us 内完成 */
+    }
+    ADC_CONTR &= ~0x20;                     /* 清完成标志 */
     return (((uint16_t)ADC_RES << 8) | ADC_RESL);
 }
 

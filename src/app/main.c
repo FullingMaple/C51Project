@@ -14,8 +14,8 @@ char *USER_STCISPCMD = "@STCISP#";
 
 void System_Init(void)
 {
-    SP = 0x80;                  /* 无 STARTUP.A51：手动设栈顶（深调用/中断不覆盖变量） */
-
+    /* 注意：不要手动改 SP！C51 运行库 ?C_C51STARTUP 已设 SP=0x22（栈 221B），
+     * 手动设 0x80 会把栈砍到 128B，深调用链+中断嵌套+printf 浮点易溢出跑飞 */
     P_SW2 |= 0x80;              /* 扩展寄存器(XFR)访问使能 */
 
     OLED_IO_MODE();             /* P2.2~P2.5 开漏 + 实验箱外部上拉 */
