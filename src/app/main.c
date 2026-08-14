@@ -20,20 +20,21 @@ void System_Init(void)
     OLED_Init();                /* 双后端：虚拟 USB-CDC / 实体硬件 I2C */
 }
 
-/* 测试图案：左上角 32×32 白色方块，其余全黑（验证显示通路与方向）
- * 大块图案在 0.96 寸屏上清晰可辨：
- *   白块在左上 = 方向正常；右上 = 左右镜像；左下 = 上下颠倒；右下 = 180° 旋转
- *   白块缺角/不完整 = 显示通路或 COM 配置问题 */
+/* 测试图案：全屏横条纹（偶数页白、奇数页黑，8 条 8px 高条纹）
+ * 验证显示完整性：4 条白条纹应均匀横贯全屏（顶部第 1 条为白）
+ *   某条白纹缺/短 = 对应页显示问题（查 0xDA COM 配置或接线） */
 static void OLED_TestPattern(void)
 {
     uint8_t x, y;
 
     OLED_Clear();
 
-    /* 左上 32×32 白块（页0-3 × 列0-31） */
-    for(y = 0; y < 4; y++)
-        for(x = 0; x < 32; x++)
-            OLED_DisplayBuf[y][x] = 0xFF;
+    for(y = 0; y < OLED_PAGES; y++)
+    {
+        if((y & 1) == 0)
+            for(x = 0; x < OLED_WIDTH; x++)
+                OLED_DisplayBuf[y][x] = 0xFF;   /* 偶数页白条纹 */
+    }
 }
 
 void main(void)
