@@ -23,7 +23,7 @@ void System_Init(void)
 /* 测试图案：边框 + 左上角方块 + 左上→右下斜线（验证显示通路与方向） */
 static void OLED_TestPattern(void)
 {
-    uint8_t x, y, yp, bit;
+    uint8_t x, y, yp, bitpos;
 
     OLED_Clear();
 
@@ -49,8 +49,8 @@ static void OLED_TestPattern(void)
     for(x = 0; x < OLED_WIDTH; x++)
     {
         yp  = x / 16;               /* 页 = (x/2)/8 */
-        bit = 7 - ((x / 2) % 8);    /* 页内位 */
-        OLED_DisplayBuf[yp][x] |= (uint8_t)(1 << bit);
+        bitpos = 7 - ((x / 2) % 8);    /* 页内位 */
+        OLED_DisplayBuf[yp][x] |= (uint8_t)(1 << bitpos);
     }
 }
 
