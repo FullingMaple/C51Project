@@ -1,0 +1,9 @@
+{
+	"servers": {
+		"stc-manual": {
+			"type": "http",
+			"url": "https://help.stcaimcu.com/mcp"
+		}
+	},
+	"inputs": []
+}
