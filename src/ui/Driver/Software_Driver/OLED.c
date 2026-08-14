@@ -143,7 +143,7 @@ void OLED_Clear(void)
 		{
 			OLED_DisplayBuf[j][i] = 0x00;	//将显存数组数据全部清零
 		}
-	}
+	}	OLED_ShadowClear();	// 同步清影子缓冲：diff 只发重绘的变化页
 }
 /**
   * 函    数：将OLED显存数组部分清零

@@ -160,6 +160,12 @@ void OLED_Init(void)
     memset(OLED_ShadowBuf, 0, sizeof(OLED_ShadowBuf));
 }
 
+/* 清影子缓冲：OLED_Clear 后同步调用，diff 对比才不会把全屏当变化 */
+void OLED_ShadowClear(void)
+{
+    memset(OLED_ShadowBuf, 0, sizeof(OLED_ShadowBuf));
+}
+
 /* ================= 刷新 ================= */
 /* 全屏刷新：diff 逐页对比，只发变化的页 */
 void OLED_Update(void)
