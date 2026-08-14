@@ -68,7 +68,7 @@ MenuItem AboutThisDeviceMenuItems[] = {
 /* ================= 页面 ================= */
 MenuPage MainMenuPage = {
     /* 通用属性 */
-    MENU_TYPE_TILES, SPEED, NOT_SHOW, PID_CURVE, OLED_UI_FONT_16,
+    MENU_TYPE_TILES, SPEED, NOT_SHOW, UNLINEAR, OLED_UI_FONT_16,
     NULL, MainMenuItems, 5, MainAuxFunc,
     /* 列表属性（磁贴不用） */
     {0, 0, 0, 0}, 0, 0, 0, 0,
@@ -81,7 +81,7 @@ MenuPage MainMenuPage = {
 MenuPage SettingsMenuPage = {
     MENU_TYPE_LIST, SPEED, REVERSE_ROUNDRECTANGLE, UNLINEAR, OLED_UI_FONT_12,
     &MainMenuPage, SettingsMenuItems, 4, SettingAuxFunc,
-    {0, 0, 0, 0}, 0, 0, 0, 0,
+    {0, 0, 128, 64}, 0, 0, 0, 0,
     0, 0, 0, 0,
     0, 0, {0, 0}
 };
@@ -89,7 +89,7 @@ MenuPage SettingsMenuPage = {
 MenuPage AboutThisDeviceMenuPage = {
     MENU_TYPE_LIST, SPEED, REVERSE_ROUNDRECTANGLE, UNLINEAR, OLED_UI_FONT_12,
     &MainMenuPage, AboutThisDeviceMenuItems, 4, SettingAuxFunc,
-    {0, 0, 0, 0}, 0, 0, 0, 0,
+    {0, 0, 128, 64}, 0, 0, 0, 0,
     0, 0, 0, 0,
     0, 0, {0, 0}
 };
