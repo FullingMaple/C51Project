@@ -143,7 +143,8 @@ void OLED_Clear(void)
 		{
 			OLED_DisplayBuf[j][i] = 0x00;	//将显存数组数据全部清零
 		}
-	}}
+	}
+}
 /**
   * 函    数：将OLED显存数组部分清零
   * 参    数：X 指定区域左上角的横坐标，范围：0~OLED_WIDTH-1
@@ -178,9 +179,10 @@ void OLED_Clear(void)
 	  Width = x_end - x_start;
 	  Height = y_end - y_start;
   
-	  /* 页级掩码清除：每页每列一次清 8 行（原逐像素循环约 8 倍加速） */
+	  /* 页级掩码清除：每页每列一次清 8 行，rows 限制在本页剩余行内 */
 	  for (j = y_start; j < y_end; ) {
-		  uint8_t rows = (y_end - j > 8) ? 8 : (uint8_t)(y_end - j);
+		  uint8_t rem = 8 - (uint8_t)(j % 8);
+		  uint8_t rows = (y_end - j > rem) ? rem : (uint8_t)(y_end - j);
 		  uint8_t mask = (uint8_t)(((1 << rows) - 1) << (j % 8));
 		  page = j / 8;
 		  for (i = x_start; i < x_end; i++) {
@@ -731,31 +733,18 @@ void OLED_PrintfMix(int16_t X, int16_t Y, uint8_t ChineseFontSize,uint8_t ASCIIF
 	 endX = (endX > OLED_WIDTH-1) ? OLED_WIDTH-1 : endX;
 	 endY = (endY > OLED_HEIGHT-1) ? OLED_HEIGHT-1 : endY;
 		 if(startX > endX || startY > endY){return;}
+		 //OLED_ClearArea(startX, startY, endX - startX + 1, endY - startY + 1);
 		 for (j = 0; j <= (PictureHeight - 1) / 8; j++) {
-		 int16_t colY = Y_Pic + j * 8;
 		 for (i = 0; i < PictureWidth; i++) {
 			 currX = X_Pic + i;
 			 if (currX < startX || currX > endX) {continue;};
-			 dataval = Image[j * PictureWidth + i];		/* 该列 8 像素（一次读取） */
-			 if (dataval == 0) {continue;}
-			 page = colY / 8;
-			 if (page >= OLED_PAGES) {continue;}
-			 /* 快路径：整列 8 像素一次写入（垂直连续，可能跨页；无逐位循环） */
-			 if (colY >= startY && colY + 7 <= endY) {
-				 bit_pos = colY % 8;
-				 OLED_DisplayBuf[page][currX] |= (uint8_t)(dataval << bit_pos);
-				 if (bit_pos != 0 && page + 1 < OLED_PAGES) {
-					 OLED_DisplayBuf[page + 1][currX] |= (uint8_t)(dataval >> (8 - bit_pos));
-				 }
-			 } else {
-				 /* 慢路径：列在区域边缘，逐位裁剪 */
-				 for (bitval = 0; bitval < 8; bitval++) {
-					 currY = colY + bitval;
-					 if (currY < startY || currY > endY) {continue;};
-					 if (dataval & (1 << bitval)) {
-						 OLED_DisplayBuf[currY / 8][currX] |= (1 << (currY % 8));
-					 }
-				 }
+			 for (bitval = 0; bitval < 8; bitval++) {
+				 currY = Y_Pic + j * 8 + bitval;
+				 if (currY < startY || currY > endY) {continue;};
+				 page = currY / 8;
+				 bit_pos = currY % 8;
+				 dataval = Image[j * PictureWidth + i];
+				 if (dataval & (1 << bitval)) {OLED_DisplayBuf[page][currX] |= (1 << bit_pos); }
 			 }
 		 }
 	 }
