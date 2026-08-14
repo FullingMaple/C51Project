@@ -1,0 +1,17 @@
+# Keil 构建产物
+Objects/
+Listings/
+*.hex
+*.m51
+*.map
+*.lst
+*.obj
+*.omf
+*.bak
+
+# Keil 用户选项（含窗口布局等个人配置）
+*.uvopt
+
+# Windows
+Thumbs.db
+Desktop.ini

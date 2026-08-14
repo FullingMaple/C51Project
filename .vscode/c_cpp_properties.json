@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "C51",
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/inc",
+                "${workspaceFolder}/src/inc",
+                "D:/APP/C51V961/C51/INC/STC",
+                "D:/APP/C51V961/C51/INC"
+            ],
+            "defines": [
+                "__C51__"
+            ],
+            "cStandard": "c99",
+            "compilerPath": "D:/APP/C51V961/C51/BIN/C51.exe"
+        }
+    ],
+    "version": 4
+}

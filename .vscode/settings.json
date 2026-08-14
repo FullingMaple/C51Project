@@ -1,0 +1,16 @@
+{
+    "C_Cpp.intelliSenseEngine": "Tag Parser",
+    "C_Cpp.intelliSenseEngineFallback": "Tag Parser",
+    "C_Cpp.errorSquiggles": "disabled",
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}",
+        "${workspaceFolder}/inc",
+        "${workspaceFolder}/src/inc",
+        "D:/APP/C51V961/C51/INC/STC",
+        "D:/APP/C51V961/C51/INC"
+    ],
+    "C_Cpp.default.defines": [
+        "__C51__",
+        "__STC8H8K64U__"
+    ]
+}
