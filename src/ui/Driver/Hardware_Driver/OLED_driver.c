@@ -160,6 +160,7 @@ void OLED_UpdateArea(uint8_t X, uint8_t Y, uint8_t Width, uint8_t Height)
 {
 #if(!VIRTUAL_OLED)
     uint8_t page, page_start, page_end, i;
+    X = X;    Width = Width;    /* 当前 diff 按整页(128列)比较，列范围参数暂用不到 */
 
     page_start = (Y >> 3) & 0x07;
     page_end   = ((Y + Height - 1) >> 3) & 0x07;
