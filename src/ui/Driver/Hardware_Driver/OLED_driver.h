@@ -9,9 +9,11 @@
 
 #include "config.h"
 
+#ifndef OLED_WIDTH
 #define OLED_WIDTH   128
 #define OLED_HEIGHT  64
 #define OLED_PAGES   8
+#endif
 
 /* 帧缓冲由图形层（OLED.c）定义，驱动层 extern 引用 */
 extern uint8_t xdata OLED_DisplayBuf[OLED_PAGES][OLED_WIDTH];

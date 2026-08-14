@@ -34,7 +34,7 @@
           <bCustSvd>0</bCustSvd>
           <UseEnv>0</UseEnv>
           <BinPath></BinPath>
-          <IncludePath>.\src\inc;.\src\ui\Driver\Hardware_Driver;.\src\ui\Driver\Software_Driver;D:\APP\C51V961\C51\INC\STC;D:\APP\C51V961\C51\INC</IncludePath>
+          <IncludePath>.\src\inc;.\src\ui\Driver\Hardware_Driver;.\src\ui\Driver\Software_Driver;D:\APP\C51V961\C51\INC;D:\APP\C51V961\C51\INC\STC</IncludePath>
           <LibPath></LibPath>
           <RegisterFilePath>STC\</RegisterFilePath>
           <DBRegisterFilePath>STC\</DBRegisterFilePath>
@@ -324,7 +324,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>.\src\inc;.\src\ui\Driver\Hardware_Driver;.\src\ui\Driver\Software_Driver;D:\APP\C51V961\C51\INC\STC;D:\APP\C51V961\C51\INC</IncludePath>
+              <IncludePath>.\src\inc;.\src\ui\Driver\Hardware_Driver;.\src\ui\Driver\Software_Driver;D:\APP\C51V961\C51\INC;D:\APP\C51V961\C51\INC\STC</IncludePath>
             </VariousControls>
           </C51>
           <Ax51>
@@ -390,6 +390,36 @@
               <FileName>OLED.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\ui\Driver\Software_Driver\OLED.c</FilePath>
+            </File>
+            <File>
+              <FileName>OLED_Fonts.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\ui\Driver\Software_Driver\OLED_Fonts.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>ui_framework</GroupName>
+          <Files>
+            <File>
+              <FileName>OLED_UI.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\ui\OLED_UI\OLED_UI.c</FilePath>
+            </File>
+            <File>
+              <FileName>OLED_UI_Launcher.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\ui\OLED_UI\OLED_UI_Launcher.c</FilePath>
+            </File>
+            <File>
+              <FileName>OLED_UI_MenuData.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\ui\OLED_UI\OLED_UI_MenuData.c</FilePath>
+            </File>
+            <File>
+              <FileName>misc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\ui\OLED_UI\misc.c</FilePath>
             </File>
           </Files>
         </Group>
