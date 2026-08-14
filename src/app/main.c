@@ -20,20 +20,25 @@ void System_Init(void)
     OLED_Init();                /* 双后端：虚拟 USB-CDC / 实体硬件 I2C */
 }
 
-/* 测试图案：全屏横条纹（偶数页白、奇数页黑，8 条 8px 高条纹）
- * 验证显示完整性：4 条白条纹应均匀横贯全屏（顶部第 1 条为白）
- *   某条白纹缺/短 = 对应页显示问题（查 0xDA COM 配置或接线） */
+/* 测试图案：16×16 黑白棋盘格（8 列 × 4 行 = 32 格），左上角白格
+ * 验证显示完整性：数格子数 + 看四角颜色
+ *   正常：32 格完整，四角 = 左上白 / 右上黑 / 左下黑 / 右下白
+ *   缺格/错位/颜色乱 = 对应区域显示问题（查 0xDA COM 配置或接线） */
 static void OLED_TestPattern(void)
 {
-    uint8_t x, y;
+    uint8_t x, y, gx, gy, col;
 
     OLED_Clear();
 
-    for(y = 0; y < OLED_PAGES; y++)
+    for(gy = 0; gy < 4; gy++)               /* 4 行格 */
     {
-        if((y & 1) == 0)
-            for(x = 0; x < OLED_WIDTH; x++)
-                OLED_DisplayBuf[y][x] = 0xFF;   /* 偶数页白条纹 */
+        for(gx = 0; gx < 8; gx++)           /* 8 列格 */
+        {
+            col = ((gx + gy) & 1) ? 0x00 : 0xFF;    /* (gx+gy) 偶=白 */
+            for(y = 0; y < 2; y++)          /* 每格 2 页 */
+                for(x = 0; x < 16; x++)     /* 每格 16 列 */
+                    OLED_DisplayBuf[gy*2 + y][gx*16 + x] = col;
+        }
     }
 }
 
