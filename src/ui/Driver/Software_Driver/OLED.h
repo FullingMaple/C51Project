@@ -12,8 +12,10 @@ extern "C" {
 
 
 //使用宏定义的方式确定oled的横向像素与竖向像素
+#ifndef OLED_WIDTH
 #define OLED_WIDTH				    (128)					
 #define OLED_HEIGHT 			    (64)
+#endif
 /*半角字符参数取值*/
 /*此参数值不仅用于判断，而且用于计算横向字符偏移，默认值为字体像素宽度*/
 #define OLED_10X20_HALF			    (10)

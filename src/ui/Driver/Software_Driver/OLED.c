@@ -1130,7 +1130,7 @@ void OLED_DrawLine(int16_t X0, int16_t Y0, int16_t X1, int16_t Y1)
 void OLED_DrawRectangle(int16_t X, int16_t Y, int16_t Width, int16_t Height, uint8_t IsFilled)
 {
 	int16_t X_start, X_end, Y_start, Y_end, validWidth, validHeight, i, x, page;
-	uint8_t start_mask, end_mask, mask;
+
     if (Width == 0 || Height == 0) { return; } // 宽度或高度为0，不绘制
 
     X_start = X;

@@ -21,8 +21,10 @@ void OLED_UI_start(void)
     }
 }
 
-/* Timer0 中断回调（20ms 节拍）：按键记录/动画推进/帧率计数 */
+/* Timer0 中断回调（20ms 节拍）：tick 计数 + ADC 键盘扫描 + 按键记录/动画推进/帧率计数 */
 void Timer0_Isr(void) interrupt 1
 {
+    Driver_TickHandler();       /* 系统 tick 递增（GetTick 毫秒源） */
+    Driver_KeyScan();           /* ADC 键盘采样 + 三态滤波（20ms 一次） */
     OLED_UI_InterruptHandler();
 }

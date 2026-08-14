@@ -9,7 +9,7 @@
 #include "OLED_Fonts.h"
 
 extern bool ColorMode;
-extern bool OLED_UI_ShowFps;
+extern bool OLED_UI_FpsShow;
 extern int16_t OLED_UI_Brightness;
 
 #define SPEED 4
@@ -47,7 +47,7 @@ MenuItem MainMenuItems[] = {
 MenuItem SettingsMenuItems[] = {
     {"亮度",   BrightnessWindow,  NULL, NULL, &OLED_UI_Brightness, NULL, NULL, NULL, 0, 0},
     {"深浅色", NULL,              NULL, &ColorMode,         NULL, NULL, NULL, NULL, 0, 0},
-    {"显示帧率", NULL,            NULL, &OLED_UI_ShowFps,   NULL, NULL, NULL, NULL, 0, 0},
+    {"显示帧率", NULL,            NULL, &OLED_UI_FpsShow,   NULL, NULL, NULL, NULL, 0, 0},
     {"语言",   NULL,              NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
     {"提示音", NULL,              NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
     {"[返回]", OLED_UI_Back,      NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},

@@ -46,15 +46,9 @@ extern code ChineseCell8x8_t OLED_CF8x8[];  // 声明12x12字模数组
 extern code uint8_t Arrow[];
 extern code uint8_t Arrow1[];
 extern code uint8_t UnKnown[];
-extern code uint8_t Image_setings[];
 extern code uint8_t Image_window[];
-extern code uint8_t Image_wechat[];
 extern code uint8_t Image_cube[];
-extern code uint8_t Image_qq[];
-extern code uint8_t Image_alipay[];
 extern code uint8_t Image_more[];
-extern code uint8_t Image_calc[];
-extern code uint8_t Image_night[];
 extern code uint8_t Image_sleep[];
 
 
@@ -64,14 +58,7 @@ extern code uint8_t Image_wechat_64[];
 extern code uint8_t Image_alipay_64[];
 extern code uint8_t Image_night_64[];
 extern code uint8_t Image_more_64[];
-extern code uint8_t OLED_UI_LOGO[];
-extern code uint8_t OLED_UI_LOGOTEXT[];
-extern code uint8_t OLED_UI_LOGOTEXT64[];
-extern code uint8_t OLED_UI_LOGOGithub[];
-extern code uint8_t Image_alipay_QR_Code[];
-extern code uint8_t OLED_UI_SettingsLogo[];
 
-extern code uint8_t Gif_cube[][128];
 /*按照上面的格式，在这个位置加入新的图像数据声明*/
 //...
 

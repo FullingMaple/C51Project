@@ -322,7 +322,7 @@
             <InterruptVectorAddress>0</InterruptVectorAddress>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define></Define>
+              <Define>PRINTF_LARGE</Define>
               <Undefine></Undefine>
               <IncludePath>.\src\inc;.\src\ui\Driver\Hardware_Driver;.\src\ui\Driver\Software_Driver;D:\APP\C51V961\C51\INC;D:\APP\C51V961\C51\INC\STC</IncludePath>
             </VariousControls>
@@ -430,6 +430,11 @@
               <FileName>OLED_driver.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\ui\Driver\Hardware_Driver\OLED_driver.c</FilePath>
+            </File>
+            <File>
+              <FileName>OLED_UI_Driver.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\ui\Driver\Hardware_Driver\OLED_UI_Driver.c</FilePath>
             </File>
             <File>
               <FileName>stc_usb_cdc_8h_xdata.LIB</FileName>

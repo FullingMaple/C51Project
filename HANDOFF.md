@@ -7,101 +7,80 @@
 
 ## 1. 当前总体状态
 
-**v0.3 里程碑（屏幕切换 OLED）进行中：驱动层 ✅ 完成并实测点亮；OLED_UI 框架 C51 移植 🔧 进行中——编译 0 Error，链接阶段剩平台层接口未实现。**
+**v0.3 里程碑（屏幕切换 OLED）：驱动层 ✅ 实测点亮；OLED_UI 框架 C51 移植 ✅ 编译 0 Error + 链接通过 + HEX 已产出——剩上板烧录验证。**
 
 | 模块 | 状态 |
 |---|---|
-| SSD1306 驱动（OLED_driver.c，硬件 I2C + diff + 双后端） | ✅ 实体屏棋盘格验证通过（32 格完整、方向正确） |
-| Keil 工程（Project.uvproj） | ✅ 编译 0 Error（含框架，除链接） |
-| 图形层 OLED.c（上游完整版） | ✅ C51 兼容化完成 |
-| 字库 OLED_Fonts.c/.h | ✅ const → code 完成（约 29KB 字模） |
-| 框架核心 OLED_UI.c（1748 行） | 🔧 C51 兼容化完成（块内声明提升、fmin/vsnprintf/round 替换、patterns 提升、HAL 删除、ShowFps 撞名修复）——**但 OLED_UI.h 刚被写坏，需从上游重拷**（见 §3） |
-| 菜单数据 OLED_UI_MenuData.c | ✅ 已重写为本项目菜单（磁贴 6 项/设置/关于，C51 位置初始化，GBK） |
-| 平台层 OLED_UI_Driver.c | ⛔ **未实现**（16 键 ADC 键盘 + Timer0 20ms）——当前链接失败的根源 |
-| OLED_UI_Launcher.c | ✅ 已 C51 化（Timer0 中断回调已接） |
+| SSD1306 驱动（OLED_driver.c，硬件 I2C + diff + 双后端） | ✅ 实体屏棋盘格验证通过 |
+| Keil 工程（Project.uvproj） | ✅ 编译 0 Error，链接通过，flash 60.7KB/64KB（含裁剪） |
+| 图形层 OLED.c | ✅ C51 兼容化 |
+| 字库 OLED_Fonts.c/.h | ✅ const→code；**已裁剪未引用字库/图片省 ~8.8KB** |
+| 框架核心 OLED_UI.c | ✅ **本次从上游重拷并重做全部 C51 兼容化**（上次会话被 python 写空，见 §4.1） |
+| OLED_UI.h | ✅ **本次从上游重拷修复**（上次会话被写坏，GBK 解码失败，见 §4.1） |
+| 菜单数据 OLED_UI_MenuData.c | ✅ 重写为本项目菜单；变量 `OLED_UI_FpsShow` 已同步改名 |
+| 平台层 OLED_UI_Driver.c/.h | ✅ **本次实现**：Timer0 20ms（12T）+ 16 键 ADC 键盘（P1.0，三态滤波）+ 空编码器 + 软延时 + GetTick |
+| OLED_UI_Launcher.c | ✅ Timer0 中断已接 tick + 键扫 + InterruptHandler |
+| main.c | ✅ 接入 OLED_UI_init/start + SP=0x80 + EA=1 |
 
-## 2. 已完成的关键工作（背景）
+## 2. 本次会话完成的关键工作（2026-08-14 第二段）
 
-- **驱动层**：`src/ui/Driver/Hardware_Driver/OLED_driver.c` —— STC8H 硬件 I2C（`P_SW2|=0x10`、`I2CCFG=0xe0`）、影子缓冲 diff 刷新（逐页比较只发变化页）、`VIRTUAL_OLED` 双后端（0=实体硬件 I2C，1=虚拟 AiCube-ISP USB-CDC）、方向修正 0xA1 + 0xC8（实测左右镜像改 0xA0→0xA1 后正常）。
-- **接线**：J10 4 针座出厂未焊，实体屏接 7 孔座（J11）1-4 位（GND/VCC/SCL/SDA）或飞线；I2C 模式需改焊 R175/R176（出厂 SPI 焊 R173/R174）。
-- **工程配置**：uvproj 基于 69 号例程模板改造；MODP2=1、RegisterFile=STC8.H、LARGE、3 分组（app/ui/ui_framework/driver）；IncludePath 顺序：`.\src\inc;...;D:\APP\C51V961\C51\INC;D:\APP\C51V961\C51\INC\STC`（**标准 INC 必须在前**，STC 增强版 math.h/string.h 会污染）。
-- **测试图案**：棋盘格（16×16 格 × 32 格）验证显示完整性与方向。
+1. **发现并修复 OLED_UI.c 被写空**（git 提交 2696338 里它已是 0 字节空文件！）：从上游 `D:/Document/本科/单片机课程/OLED_UI_upstream/OLED_UI_Core/HAL/OLED_UI_Core/OLED_UI/OLED_UI.c` 重拷，重做全部 C51 兼容化（39 处转换）：
+   - include：`"..\OLED_UI_Launcher.h"` → `"OLED_UI_Launcher.h"`；新增 `"c51lib.h"` + `<stdarg.h>`
+   - `OLED_UI_ShowFps`（变量）→ `OLED_UI_FpsShow`（C51 大小写不敏感，与函数 OLED_UI_ShowFPS 撞名）
+   - 删 `HAL_TIM_Base_Start_IT(&htim1)`；`HAL_GetTick()` → `GetTick()`（平台层实现）
+   - `vsnprintf` → `vsprintf`（配 PRINTF_LARGE）；`fmin` 用文件级宏替代
+   - patterns 局部 const 数组 → 文件级 `static code`（C51 局部 const 进 RAM）
+   - **全部块内声明提升**：for 初始化区声明（`for(MenuID i...`、`for(int i...`）×5、语句后声明 ×10+、`MenuID_Type IncreaseID = OLED_KeyAndEncoderRecord()` 改声明+赋值（C248）
+   - **注意：文件顶部 include 必须在 fmin 宏/patterns 数组之前**（否则 uint8_t 未定义 → C129）
+2. **修复 OLED_UI.h**：从上游重拷（本地文件 GBK 解码失败，含 UTF-8 替换字符 U+FFFD 混入），改 2 处 include 为本地路径，删掉无 xdata 的重复 `extern OLED_DisplayBuf`（OLED_driver.h 已有 xdata 声明）
+3. **实现 OLED_UI_Driver.c**（见 §3.1）
+4. **裁剪 OLED_Fonts.c 未引用字库/图片省 ~8.8KB**（flash 超 64KB 问题，见 §4.3）
+5. **uvproj**：C51 Define 加 `PRINTF_LARGE`；driver 组加 OLED_UI_Driver.c
+6. **main.c**：`SP = 0x80`（无 STARTUP.A51 手动设栈）+ `OLED_UI_init()` + `OLED_UI_start()` + EA=1
+7. **构建结果**：`0 Error(s), 4 Warning(s)`，Program Size: data=15.1 xdata=3853 const=20801 code=41315（共 60.7KB < 64KB），HEX 已生成 Objects/Project.hex
 
-## 3. 当前阻塞与精确下一步
+## 3. 平台层实现要点（OLED_UI_Driver.c/.h）
 
-### 3.1 紧急：OLED_UI.h 被写坏
-
-最后一步 python 改名 `OLED_UI_ShowFps → OLED_UI_FpsShow` 时 GBK 写入失败（文件含非法字符），**OLED_UI.h 当前可能已损坏**（未验证）。修复：
-
-```bash
-cd "d:/Document/本科/单片机课程/实训项目"
-cp "D:/Document/本科/单片机课程/OLED_UI_upstream/OLED_UI_Core/HAL/OLED_UI_Core/OLED_UI/OLED_UI.h" src/ui/OLED_UI/OLED_UI.h
-# python GBK 读写应用修改：
-# 1) "#include \"Driver\\Hardware_Driver\\OLED_UI_Driver.h\"" → "#include \"OLED_UI_Driver.h\""
-# 2) "#include \"Driver\\Software_Driver\\OLED.h\"" → "#include \"OLED.h\""
-# 3) "OLED_UI_ShowFps" → "OLED_UI_FpsShow"（C51 大小写不敏感，避免与 OLED_UI_ShowFPS() 函数撞名）
-```
-（OLED_UI.c 里的 `OLED_UI_ShowFps → OLED_UI_FpsShow` 改名**已写入成功**，勿重复。）
-
-### 3.2 链接失败原因：平台层接口未实现
-
-最后编译的链接错误（0 Error 编译通过后）：
-```
-L127 UNRESOLVED: _OLED_UI_Init, OLED_UI_InterruptHandler, OLED_UI_MainLoop,
-                 ColorMode, OLED_UI_Brightness, OLED_UI_FpsShow ...
-                 Key_Init, Key_GetUpStatus, Key_GetDownStatus, Key_GetEnterStatus,
-                 Key_GetBackStatus, Encoder_Init, Encoder_Get, Encoder_Enable,
-                 Encoder_Disable, Timer_Init, Delay_ms, Delay_s
-```
-- `_OLED_UI_Init` 等带下划线 = OLED_UI.c 编译失败（OLED_UI.h 损坏导致）→ 修 3.1 后应消失
-- **`Key_* / Encoder_* / Timer_Init / Delay_*` 是真缺**：`src/ui/Driver/Hardware_Driver/OLED_UI_Driver.h` 已声明接口，**需要写 OLED_UI_Driver.c**：
-  - `Timer_Init()`：Timer0 20ms 中断（1T 模式，24MHz，重载值），中断里调 `OLED_UI_InterruptHandler()`（Launcher.c 已有 `Timer0_Isr(void) interrupt 1`）
-  - `Key_Init()`：P1.0 ADC 初始化（参考官方 17 号例程 ADC_KeyScan.c：ADCTIM/ADCCFG/ADC_CONTR + 256 分档阈值 + 三态滤波）
-  - `Key_GetUpStatus/DownStatus/EnterStatus/BackStatus()`：返回 `OLED_UI_Key.Up/.Down/.Enter/.Back` 的按下状态（0=按下，1=松开，对照 OLED_UI.c 里的判断 `OLED_UI_Key.Up == 0`）
-  - `Encoder_Init/Get/Enable/Disable()`：编码器，实验箱无 → 空实现（Init 空、Get 返回 0、Enable/Disable 空）
-  - `Delay_ms/Delay_s()`：软件延时
-  - 按键轮询在 `OLED_UI_MainLoop` 中调用（看 OLED_UI.c 对 Key_Get 的调用时机——main loop 里调用 Key_Get* 更新 OLED_UI_Key？对照上游 OLED_UI_Driver.c：`OLED_UI_Driver.c` 里的 `BtnTask()` 在 Launcher 的 while 循环里调用，更新 OLED_UI_Key）
-  - **参考**：上游 `OLED_UI_upstream/OLED_UI_Core/HAL/OLED_UI_Core/Driver/Hardware_Driver/OLED_UI_Driver.c`（STM32 版接口语义）+ 官方 17 号例程 `D:/edge_download/STC8H8K64U-DEMO-CODE-V9.6/17-ADC键盘扫描数码管显示键值和调整时间/C语言/ADC_KeyScan.c`（ADC 键盘算法）
-- 写完把 `OLED_UI_Driver.c` 加入 uvproj 的 driver 组
-
-### 3.3 下一步顺序（完成后）
-
-1. 修 OLED_UI.h（3.1）→ 编译确认 0 Error
-2. 写 OLED_UI_Driver.c（3.2）→ 编译链接通过 → HEX
-3. `src/app/main.c`：`System_Init` 里加 `Timer_Init(); Key_Init();` 和 `OLED_UI_init()`；main 循环改 `OLED_UI_start()`（或直接 OLED_UI_MainLoop）——参考 Launcher.c 的 OLED_UI_init/start
-4. 烧录验证：磁贴主屏 6 项显示、按键导航（ADC 键盘键值 1-4 对应上/下/确认/返回，`config.h` 的 KEY_ADC_* 占位值按实验箱实际布局调整）
-5. 提交 git
+- `Timer_Init()`：**12T 模式**（1T 下 16 位定时器最大 2.73ms 无法 20ms），24MHz→2MHz，20ms=40000 计数，重载 65536-40000=25536（TH0=0x63/TL0=0xC0），TMOD 0x01，AUXR &= ~0x80
+- `Key_Init()`：P1.0=ADC0 高阻（P1M1|=0x01），ADCTIM=0x3f / ADCCFG=0x2f / ADC_CONTR=0x80（官方 17 号例程参数）
+- `Driver_KeyScan()`：20ms 中断内采样 → 256 分档（ADC_OFFSET=64）→ **三态滤波**（连续 3 次相同才确认，60ms 去抖）→ 更新 `Key_Hold`
+- `Key_Get*Status()`：返回 0=按下 1=松开（与 OLED_UI_Key 语义一致），映射 config.h 的 `KEY_ADC_UP/DOWN/ENTER/BACK`（1/2/3/4，按实验箱实际布局调整）
+- `GetTick()`：Timer0 20ms 计数 ×20（ms）；FADEOUT_TIME 40ms 节拍用
+- Launcher.c 的 Timer0_Isr：`Driver_TickHandler(); Driver_KeyScan(); OLED_UI_InterruptHandler();`
+- 编码器：实验箱无 → 空实现（Encoder_Get 返回 0）
 
 ## 4. 踩坑清单（新会话必读，都是真金白银）
 
-1. **STC 头文件是 `STC8H.H`（不是 STC8.H）**，在 `D:/APP/C51V961/C51/INC/STC/`；src/inc 下**不要建 stc8h.h shim**（与 STC8H.H 大小写撞车，include 命中自己导致内容被 guard 跳过）
-2. **不要 include STC 增强版 `<math.h>/<string.h>/<stdio.h>`**（STC 补丁覆盖了标准头，含 C99/C++ 扩展 C51 编不过）→ 用 `src/inc/c51lib.h`（手动声明 strcmp/strlen/sprintf/vsprintf/atan2/sin/cos/fabs/ceil 原型）
-3. **python 处理 GBK 文件必须 `rb` 读 + `wb` 写 + 同编码**；`rb` 读 + 文本写会把行尾 `\r\n → \r\r\n` 逐次加倍，C51 解析 include 错乱（报错行号错位到别的文件）→ 统一 LF（`s.replace('\r\n','\n')`）
-4. **`bit`、`data`、`code` 是 C51 关键字**，不能做变量名（`uint8_t bit` → 改名 bitval）
-5. **C51 不支持**：for 初始化区声明、语句后声明（必须提到函数头/块开头）、C99 designated initializer（`.field=`）、复合字面量（`{0,0}` 赋值）、非常量数组初始化（`int vx[] = {X0,X1,X2}`）、`fmin/fmax/round/vsnprintf/sinf/cosf`（C51 库没有或签名不同）
-6. **`const` 默认进 RAM**，数组必须显式 `code`（字库/图标）；**extern 声明必须匹配**：`extern code uint8_t` 配 `code uint8_t` 定义（`extern const` + `code` 定义 → L102/L231 报错）
-7. **C51 大小写不敏感**：`OLED_UI_ShowFps`（变量）与 `OLED_UI_ShowFPS()`（函数）撞名 → 变量已改名 `OLED_UI_FpsShow`
-8. **结构体整体赋值**（`A = B`）C51 支持；但初始化 `= 其他结构体` 不支持（C248）→ 声明 + 赋值分离
-9. OLED 方向：上下反改 0xC0↔0xC8，左右反改 0xA0↔0xA1（本模块实测 0xA1 + 0xC8）
-10. `OLED_DisplayBuf` 定义在 OLED.c（`uint8_t xdata`），OLED.h/OLED_UI.h 的 extern 必须带 `xdata` 或不重复声明（OLED.h 里的重复 extern 已删）
-11. uvproj 的 `MiscControls=REMOVEUNUSED` 会移除未引用函数/变量——链接报 unresolved 时先确认定义文件编译成功且被引用
+1. **OLED_UI.c/.h 曾被 python GBK 写坏**：`rb` 读 + 文本写 → 文件变空/混入 U+FFFD。**处理 GBK 文件必须 rb/wb + 同编码**；恢复方法 = 从上游重拷 + 重做兼容化（§2 清单）。**建议以后把 OLED_UI.c 的兼容化改动提交 git（本会话已提交，勿再丢失）**
+2. **C51 声明位置规则比想象的严**：不仅"块内任意位置"不行，**连"声明在赋值语句之后"都报错 C141**（expected '__asm'）——声明必须全部提到函数/块开头，赋值放后面。for 初始化区声明（`for(MenuID i = 0;`）同样不行
+3. **C51 结构体初始化限制**：声明时不能 `= 结构体对象`（C248，如 `OLED_ChangePoint t = 全局结构体`）也不能 `= 函数返回值`（C248）——必须声明+赋值分离
+4. **flash 超 64KB 是真实风险**：完整字库 29.1KB + 框架 code 41.3KB = 70.7KB。**未引用的 const 数组不会被 REMOVEUNUSED 移除**（它只移除未引用函数）——必须手动删定义+声明。本会话删：Gif_cube(9.6K)、LOGO×5(2K)、alipay_QR(2K)、32 版图片×6(0.8K) → const 20.8KB。**20x20/10x20 字体被 OLED.c 的字体选择代码引用，保留**
+5. **OLED_Fonts.c 数据用大写 `0X`**（不是 0x）——正则/脚本统计字节数时注意
+6. **OLED.h 是 LF 行尾**（不是 CRLF）；其 OLED_WIDTH/HEIGHT 宏会与 OLED_driver.h 重复定义（C317）——已加 #ifndef 保护
+7. **PRINTF_LARGE 必须在 C51 Define 里配**（vsprintf/%f/%.2f 需要；printf_small 无 vsprintf）
+8. **文件顶部 include 必须在 fmin 宏/patterns 数组之前**（uint8_t 未定义 → C129 missing ';'）
+9. 剩余 4 Warning 可接受：L15 MULTIPLE CALL ×2（Timer0 中断与主循环共享 GetMenuItemNum/GetWindowDataStyle，框架设计使然，Keil 自动禁止 overlay 保护）、L25 DATA TYPES DIFFERENT ×2（OLED_UI_init/start 的 void 参数表编码差异，无害）
+10. 其余沿用旧清单（STC8H.H、c51lib.h、bit/code 关键字、extern 匹配、OLED 方向、OLED_DisplayBuf xdata、uvproj MODP2 等）
 
-## 5. 构建与验证命令
+## 5. 下一步（上板验证清单）
+
+1. 烧录 Objects/Project.hex（STC-ISP，IRC 24MHz）
+2. 验证磁贴主屏 6 项显示 + 文字图标正常、方向正确（0xA1+0xC8 已配置）
+3. 按键导航：ADC 键盘键值 1/2/3/4 对应上/下/确认/返回——**若键位不对，调 config.h 的 KEY_ADC_***（实验箱 16 键布局，官方 17 号例程的键值 1-16 顺序）
+4. 验证：进入设置（亮度窗口 +/-、深浅色、显示帧率开关）、返回动画、长按加速
+5. 若方向/镜像有问题：左右改 0xA0↔0xA1、上下改 0xC0↔0xC8（OLED_driver.c）
+6. 提交验证结果 + 更新文档
+
+## 6. 构建与验证命令
 
 ```bash
 # 构建（命令行，无需打开 Keil）
 "D:/APP/C51V961/UV4/UV4.exe" -b "Project.uvproj" -o "build_log.txt" && sleep 25 && grep -E "error|Program Size" build_log.txt
 # 产物：Objects/Project.hex（STC-ISP 烧录，IRC 24MHz）
 
-# git（当前在 dev 分支，有大量未提交改动）
+# git（dev 分支）
 git add -A && git commit -m "..." && git push origin dev
 ```
-
-## 6. Git 状态
-
-- 分支：dev（main 已有 2 次文档提交；dev 已有 12 次提交，最新 `b17f379`）
-- **未提交改动**：src/ 下大量文件（框架移植全部改动 + OLED_UI.h 可能损坏 + OLED_UI_Driver.c 待建）——建议 3.3 完成后统一提交，提交信息注明"v0.3 框架移植"
-- `.gitignore`：Objects/、Listings/、*.uvopt、build_log.txt
 
 ## 7. 参考资料位置
 
