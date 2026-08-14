@@ -80,7 +80,7 @@ void GetFPS(void){
 void OLED_UI_ShowFPS(void){
     OLED_FPS.count ++;
 	if (OLED_UI_FpsShow){
-		OLED_Printf(110,0,OLED_6X8_HALF,"%3d",OLED_FPS.value);
+		OLED_Printf(110,0,OLED_6X8_HALF,"%3d P%d",OLED_FPS.value,OLED_DirtyPages);   /* P=±¾Ö¡Ë¢ÐÂÒ³Êý£¨Õï¶Ï£© */
 	}
 }
 /**

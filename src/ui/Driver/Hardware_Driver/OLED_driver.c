@@ -167,6 +167,8 @@ void OLED_ShadowClear(void)
 }
 
 /* ================= 刷新 ================= */
+uint8_t OLED_DirtyPages;   /* 诊断：本帧刷新的页数（diff 统计） */
+
 /* 全屏刷新：diff 逐页对比，只发变化的页 */
 void OLED_Update(void)
 {
@@ -175,12 +177,15 @@ void OLED_Update(void)
     P22 = 0;
     OLED12864_ShowPicture(0, 0, OLED_WIDTH, OLED_PAGES, &OLED_DisplayBuf[0][0]);
     P22 = 1;
+    OLED_DirtyPages = 0;
 #else
     uint8_t page;
+    OLED_DirtyPages = 0;
     for(page = 0; page < OLED_PAGES; page++)
     {
         if(memcmp(OLED_ShadowBuf[page], OLED_DisplayBuf[page], OLED_WIDTH) != 0)
         {
+            OLED_DirtyPages++;
             OLED_SetPos(page);
             OLED_Write_Data_Bulk(OLED_DisplayBuf[page], OLED_WIDTH);   /* 一次事务发整页 */
             memcpy(OLED_ShadowBuf[page], OLED_DisplayBuf[page], OLED_WIDTH);
