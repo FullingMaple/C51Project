@@ -108,7 +108,7 @@ void OLED_Init(void)
     OLED_Write_Command(0x40);   /* 显示起始行 0 */
     OLED_Write_Command(0x81);   /* 对比度（亮度） */
     OLED_Write_Command(0xCF);
-    OLED_Write_Command(0xA0);   /* 段重映射（左右镜像改 0xA1） */
+    OLED_Write_Command(0xA1);   /* 段重映射（左右镜像改 0xA0；实测本模块需 0xA1） */
     OLED_Write_Command(0xC8);   /* COM 扫描方向（上下颠倒改 0xC0） */
     OLED_Write_Command(0xA6);   /* 正常显示（反色改 0xA7） */
     OLED_Write_Command(0xA8);   /* 多路复用比 64 */
