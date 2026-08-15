@@ -43,7 +43,7 @@ static void I2C_Wait(void)
             else
             {
                 I2CCFG = 0x00;      /* 复位 I2C 模块 */
-                I2CCFG = 0xe0;
+                I2CCFG = 0xCD;
                 I2CMSST = 0x00;
             }
             return;
@@ -163,7 +163,8 @@ void OLED_Init(void)
 #else
     /* ---- 实体 OLED：SSD1306 硬件 I2C ---- */
     P_SW2 |= 0x10;              /* I2C 功能脚选择 P2.5/P2.4 */
-    I2CCFG = 0xe0;              /* 暂回 176kHz：0xCD(400kHz) 下按进入键卡死，待逐步提速验证 */
+    I2CCFG = 0xCD;              /* 24MHz @400kHz：MSSPEED=13（FOSC/2/(MSSPEED*2+4)=400k）
+     * 总线异常由 I2C_BusRecover 自动恢复（9 脉冲+重初始化） */
     I2CMSST = 0x00;
 
     OLED_Write_Command(0xAE);   /* 关闭显示 */
