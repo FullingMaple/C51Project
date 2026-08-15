@@ -224,24 +224,15 @@ static uint8_t OLED_FrameCounter;   /* 帧计数：周期全刷自愈（I2C 偶�
 void OLED_Update(void)
 {
 #if(VIRTUAL_OLED)
-    /* 虚拟 OLED：diff 逐页发送（变化页才发 128B，整屏 8 页 vs 1 页）
-     * USB 忙/未枚举时跳过该页：库发送为阻塞式，主机读取不及时会死等，
-     * 忙则丢页不阻塞（下帧重发），渐隐动画期间可接受丢帧 */
-    uint8_t page;
+    /* 虚拟 OLED：整屏经 USB-CDC 发送（参数语义以整屏 (0,0,128,8) 为准）
+     * 节流：每 2 帧发一次（发送率减半，虚拟屏刷新率足够）
+     * USB 忙/未枚举时跳过本帧：库发送为阻塞式，主机读取不及时会死等 */
+    static uint8_t vframe;
     P22 = 0;
-    if(DeviceState == DEVSTATE_CONFIGURED)
+    vframe++;
+    if((vframe & 1) == 0 && !bUsbInBusy && DeviceState == DEVSTATE_CONFIGURED)
     {
-        for(page = 0; page < OLED_PAGES; page++)
-        {
-            if(memcmp(OLED_ShadowBuf[page], OLED_DisplayBuf[page], OLED_WIDTH) != 0)
-            {
-                if(!bUsbInBusy)
-                {
-                    OLED12864_ShowPicture(0, page * 8, OLED_WIDTH, 1, &OLED_DisplayBuf[page][0]);
-                    memcpy(OLED_ShadowBuf[page], OLED_DisplayBuf[page], OLED_WIDTH);
-                }
-            }
-        }
+        OLED12864_ShowPicture(0, 0, OLED_WIDTH, OLED_PAGES, &OLED_DisplayBuf[0][0]);
     }
     P22 = 1;
 #else
