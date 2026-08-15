@@ -17,22 +17,63 @@
 static uint8_t xdata OLED_ShadowBuf[OLED_PAGES][OLED_WIDTH];
 
 /* ================= 硬件 I2C 底层（STC8H I2C 模块，P2.5/P2.4） ================= */
+static uint8_t I2C_FailCount;    /* 连续失败计数（超阈值触发总线恢复） */
+static uint8_t I2C_Recovering;   /* 总线恢复重入保护 */
+static void I2C_BusRecover(void);    /* 前向声明（I2C_Wait 调用） */
+
 static void I2C_Wait(void)
 {
     uint16_t timeout = 0;
 
     while(!(I2CMSST & 0x40))    /* 等待操作完成标志（MSIF） */
     {
-        /* 超时保护：总线挂死时复位 I2C 模块，避免主循环永久卡死 */
-        if(++timeout > 40000)
+        /* 超时保护：总线挂死时复位 I2C 模块。超时短（~2ms），
+         * 偶发失败自愈，避免每个事务 13ms 超时导致画面冻结 */
+        if(++timeout > 6000)
         {
-            I2CCFG = 0x00;      /* 复位 I2C 模块 */
-            I2CCFG = 0xe0;
-            I2CMSST = 0x00;
+            I2C_FailCount++;
+            if(I2C_FailCount > 5 && !I2C_Recovering)
+            {
+                /* 连续失败：GPIO 9 脉冲释放总线 + 重新初始化 SSD1306 */
+                I2C_Recovering = 1;
+                I2C_FailCount = 0;
+                I2C_BusRecover();
+                I2C_Recovering = 0;
+            }
+            else
+            {
+                I2CCFG = 0x00;      /* 复位 I2C 模块 */
+                I2CCFG = 0xe0;
+                I2CMSST = 0x00;
+            }
             return;
         }
     }
+    I2C_FailCount = 0;
     I2CMSST &= ~0x40;           /* 清标志 */
+}
+
+/* 总线恢复：I2C 引脚切回 GPIO，SCL 拉 9 个脉冲释放卡住的从机，重新初始化 */
+static void I2C_BusRecover(void)
+{
+    uint8_t i, j;
+
+    P_SW2 &= ~0x10;             /* I2C 功能脚断开，P2.5/P2.4 切回 GPIO */
+    P2M1 |= 0x30;               /* P2.4/P2.5 准双向/开漏 */
+    P2M0 |= 0x30;
+    OLED_SCL = 1;
+    OLED_SDA = 1;
+    for(i = 0; i < 9; i++)      /* 9 个时钟脉冲释放从机 */
+    {
+        OLED_SCL = 0;
+        for(j = 0; j < 100; j++);   /* ~4us */
+        OLED_SCL = 1;
+        for(j = 0; j < 100; j++);
+    }
+    OLED_SDA = 1;               /* 释放 SDA */
+    OLED_SCL = 1;
+    P_SW2 |= 0x10;              /* 恢复 I2C 功能脚 */
+    OLED_Init();                /* 重新初始化 SSD1306（内部 I2C_Wait 超时由 Recovering 保护） */
 }
 
 static void I2C_Start(void)
