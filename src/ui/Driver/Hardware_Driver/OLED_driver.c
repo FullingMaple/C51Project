@@ -45,7 +45,7 @@ static void I2C_Wait(void)
             else
             {
                 I2CCFG = 0x00;      /* 复位 I2C 模块 */
-                I2CCFG = 0xD4;
+                I2CCFG = 0xCD;
                 I2CMSST = 0x00;
             }
             return;
@@ -166,8 +166,8 @@ void OLED_Init(void)
 #else
     /* ---- 实体 OLED：SSD1306 硬件 I2C ---- */
     P_SW2 |= 0x10;              /* I2C 功能脚选择 P2.5/P2.4 */
-    I2CCFG = 0xD4;              /* 24MHz @273kHz：MSSPEED=20（FOSC/2/(20*2+4)=273k）
-     * 400kHz(0xCD) 下飞线信号余量不足、I2C 频繁超时（R 计数验证），降速折中 */
+    I2CCFG = 0xCD;              /* 24MHz @400kHz：MSSPEED=13（FOSC/2/(13*2+4)=400k）
+     * 再次尝试 400kHz（整页 diff + 总线恢复兜底）；不行回 273kHz(0xD4) */
     I2CMSST = 0x00;
 
     OLED_Write_Command(0xAE);   /* 关闭显示 */
