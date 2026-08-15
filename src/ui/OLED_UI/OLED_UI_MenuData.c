@@ -34,12 +34,12 @@ void BrightnessWindow(void){
 
 /* ================= 磁贴主屏菜单项 ================= */
 MenuItem MainMenuItems[] = {
-    {"设置",   NULL, &SettingsMenuPage,        NULL, NULL, NULL, Image_settings_64, NULL, 0, 0},
+    {"设置",   NULL, &SettingsMenuPage,        NULL, NULL, NULL, Image_wrench,      NULL, 0, 0},
     {"关于",   NULL, &AboutThisDeviceMenuPage, NULL, NULL, NULL, Image_more,         NULL, 0, 0},
-    {"测温",   NULL, NULL,                     NULL, NULL, NULL, Image_sleep,        NULL, 0, 0},
-    {"串口",   NULL, NULL,                     NULL, NULL, NULL, Image_window,       NULL, 0, 0},
-    {"计算器", NULL, NULL,                     NULL, NULL, NULL, Image_calc_64,      NULL, 0, 0},
-    {"游戏",   NULL, NULL,                     NULL, NULL, NULL, Image_cube,         NULL, 0, 0},
+    {"测温",   NULL, NULL,                     NULL, NULL, NULL, Image_thermo,       NULL, 0, 0},
+    {"串口",   NULL, NULL,                     NULL, NULL, NULL, Image_serial,       NULL, 0, 0},
+    {"计算器", NULL, NULL,                     NULL, NULL, NULL, Image_calc2,        NULL, 0, 0},
+    {"游戏",   NULL, NULL,                     NULL, NULL, NULL, Image_gamepad,      NULL, 0, 0},
     {NULL}
 };
 
