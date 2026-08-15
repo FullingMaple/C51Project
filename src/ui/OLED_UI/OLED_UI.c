@@ -1609,6 +1609,7 @@ void MoveMenuElements(void){
  * @return 无
  */
 void OLED_UI_MainLoop(void){
+	OLED_Printf(110,0,OLED_6X8_HALF,"D-A");	/* diag */
 	//清屏
 	OLED_Clear();
 
@@ -1616,6 +1617,7 @@ void OLED_UI_MainLoop(void){
 
 	//移动菜单元素
 	MoveMenuElements();
+	OLED_Printf(110,0,OLED_6X8_HALF,"D-B");	/* diag */
 
 	
 	//当互斥锁被置位时，运行当前菜单项的回调函数
@@ -1623,11 +1625,13 @@ void OLED_UI_MainLoop(void){
 	
 	//当渐隐互斥锁被置位时，运行渐隐效果
 	RunFadeOut();
+	OLED_Printf(110,0,OLED_6X8_HALF,"D-C");	/* diag */
 
 	//显示FPS
 	OLED_UI_ShowFPS();
 	//刷屏
 	OLED_Update();
+	OLED_Printf(110,0,OLED_6X8_HALF,"D-D");	/* diag */
 }
 
 
