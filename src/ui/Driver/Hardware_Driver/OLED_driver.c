@@ -27,7 +27,7 @@ static void I2C_Wait(void)
         if(++timeout > 40000)
         {
             I2CCFG = 0x00;      /* 复位 I2C 模块 */
-            I2CCFG = 0xCD;
+            I2CCFG = 0xe0;
             I2CMSST = 0x00;
             return;
         }
@@ -122,8 +122,7 @@ void OLED_Init(void)
 #else
     /* ---- 实体 OLED：SSD1306 硬件 I2C ---- */
     P_SW2 |= 0x10;              /* I2C 功能脚选择 P2.5/P2.4 */
-    I2CCFG = 0xCD;              /* 24MHz @400kHz：MSSPEED=13（FOSC/2/(MSSPEED*2+4)=400k）
-     * 原 0xe0(MSSPEED=32) 在 24MHz 只有 176kHz，是帧率瓶颈 */
+    I2CCFG = 0xe0;              /* 暂回 176kHz：0xCD(400kHz) 下按进入键卡死，待逐步提速验证 */
     I2CMSST = 0x00;
 
     OLED_Write_Command(0xAE);   /* 关闭显示 */
