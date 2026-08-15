@@ -218,7 +218,9 @@ void OLED_ShadowClear(void)
 }
 
 /* ================= 刷新 ================= */
-/* 全屏刷新：diff 逐页对比，只发变化的页 */
+static uint8_t OLED_FrameCounter;   /* 帧计数：周期全刷自愈（I2C 偶发丢字节的残留清理） */
+
+/* 全屏刷新：diff 逐页对比，只发变化的页（列级）；每 50 帧强制全刷一次自愈 */
 void OLED_Update(void)
 {
 #if(VIRTUAL_OLED)
@@ -228,20 +230,33 @@ void OLED_Update(void)
     P22 = 1;
 #else
     uint8_t page, c0, c1;
+    uint8_t force_full;
+    OLED_FrameCounter++;
+    force_full = (OLED_FrameCounter >= 50);   /* 每 50 帧（~0.6s）全刷自愈 */
     for(page = 0; page < OLED_PAGES; page++)
     {
-        if(memcmp(OLED_ShadowBuf[page], OLED_DisplayBuf[page], OLED_WIDTH) != 0)
+        if(force_full || memcmp(OLED_ShadowBuf[page], OLED_DisplayBuf[page], OLED_WIDTH) != 0)
         {
-            /* 列级 diff：只发变化列段（动画时传输减半，静态 FPS 页只发几列） */
-            c0 = 0;
-            while(c0 < OLED_WIDTH && OLED_ShadowBuf[page][c0] == OLED_DisplayBuf[page][c0]) c0++;
-            c1 = OLED_WIDTH - 1;
-            while(c1 > c0 && OLED_ShadowBuf[page][c1] == OLED_DisplayBuf[page][c1]) c1--;
-            OLED_SetPosRange(page, c0, c1);
-            OLED_Write_Data_Bulk(&OLED_DisplayBuf[page][c0], c1 - c0 + 1);
+            if(force_full)
+            {
+                /* 全页发送（自愈） */
+                OLED_SetPos(page);
+                OLED_Write_Data_Bulk(OLED_DisplayBuf[page], OLED_WIDTH);
+            }
+            else
+            {
+                /* 列级 diff：只发变化列段 */
+                c0 = 0;
+                while(c0 < OLED_WIDTH && OLED_ShadowBuf[page][c0] == OLED_DisplayBuf[page][c0]) c0++;
+                c1 = OLED_WIDTH - 1;
+                while(c1 > c0 && OLED_ShadowBuf[page][c1] == OLED_DisplayBuf[page][c1]) c1--;
+                OLED_SetPosRange(page, c0, c1);
+                OLED_Write_Data_Bulk(&OLED_DisplayBuf[page][c0], c1 - c0 + 1);
+            }
             memcpy(OLED_ShadowBuf[page], OLED_DisplayBuf[page], OLED_WIDTH);
         }
     }
+    if(force_full) OLED_FrameCounter = 0;
 #endif
 }
 
