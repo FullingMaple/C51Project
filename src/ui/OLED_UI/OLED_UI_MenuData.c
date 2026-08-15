@@ -12,7 +12,7 @@ extern bool ColorMode;
 extern bool OLED_UI_FpsShow;
 extern int16_t OLED_UI_Brightness;
 
-#define SPEED 4
+#define SPEED 8
 
 /* ================= ¸¨Öúº¯Êý£¨¿ò¼Ü»Øµ÷£¬ÔÝÎª¿Õ£© ================= */
 static void MainAuxFunc(void){}
