@@ -16,7 +16,7 @@
  *     开发期无实体屏调试全部 UI 逻辑；帧率数字失真，性能须实体屏验证
  * 0 = 实体 OLED（软件 I2C，SSD1306，SCL=P2.5 / SDA=P2.4 / 0x78）
  */
-#define VIRTUAL_OLED    1
+#define VIRTUAL_OLED    0
 
 /* ================= SSD1306 OLED（软件 I2C）================= */
 #define OLED_ADDR   0x78        /* 0x3C<<1；模块焊盘在 0x7A 侧则改 0x7A */
