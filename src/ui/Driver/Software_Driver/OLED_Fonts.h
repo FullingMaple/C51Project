@@ -48,7 +48,7 @@ extern code uint8_t Image_serial[];
 extern code uint8_t Image_gamepad[];
 extern code uint8_t Image_calc2[];
 extern code uint8_t Image_thermo[];
-extern code uint8_t Image_wrench[];
+extern code uint8_t Image_gear[];
 extern code uint8_t Image_window[];
 extern code uint8_t Image_cube[];
 extern code uint8_t Image_more[];
