@@ -16,3 +16,4 @@ Listings/
 Thumbs.db
 Desktop.ini
 build_log.txt
+*.uvgui*
