@@ -32,13 +32,11 @@ typedef struct
 } ChineseCell8x8_t;
 
 /*ASCII字模数据声明*/
-extern code uint8_t OLED_F10x20[][30];
 extern code uint8_t OLED_F8x16[][16];
 extern code uint8_t OLED_F7x12[][14];
 extern code uint8_t OLED_F6x8[][6];
 
 /*汉字字模数据声明*/
-extern code ChineseCell20x20_t OLED_CF20x20[];
 extern code ChineseCell16x16_t OLED_CF16x16[];
 extern code ChineseCell12x12_t OLED_CF12x12[];  // 声明12x12字模数组
 extern code ChineseCell8x8_t OLED_CF8x8[];  // 声明12x12字模数组

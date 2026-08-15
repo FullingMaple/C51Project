@@ -98,8 +98,8 @@ OLED_Font GetOLED_Font(OLED_Font fontsize,bool style){
 			ChineseFont = OLED_12X12_FULL,ASCIIFont = OLED_7X12_HALF;break;
 		case OLED_UI_FONT_16:
 			ChineseFont = OLED_16X16_FULL,ASCIIFont = OLED_8X16_HALF;break;
-		case OLED_UI_FONT_20:
-			ChineseFont = OLED_20X20_FULL,ASCIIFont = OLED_10X20_HALF;break;
+		case OLED_UI_FONT_20:	/* 20 ºÅ×Ö¿âÒÑ²Ã¼ô£¨flash ³¬ÏÞ£©£¬»ØÍË 12 ºÅ */
+			ChineseFont = OLED_12X12_FULL,ASCIIFont = OLED_7X12_HALF;break;
 		default:
 			ChineseFont = OLED_12X12_FULL,ASCIIFont = OLED_7X12_HALF;break;
 	}

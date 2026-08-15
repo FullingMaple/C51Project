@@ -18,6 +18,9 @@ void System_Init(void)
      * 手动设 0x80 会把栈砍到 128B，深调用链+中断嵌套+printf 浮点易溢出跑飞 */
     P_SW2 |= 0x80;              /* 扩展寄存器(XFR)访问使能 */
 
+    P3M0 &= ~0x03;              /* USB 引脚 P3.0/P3.1 准双向（虚拟 OLED 经 USB-CDC） */
+    P3M1 &= ~0x03;
+
     OLED_IO_MODE();             /* P2.2~P2.5 开漏 + 实验箱外部上拉 */
 
     OLED_Init();                /* 双后端：虚拟 USB-CDC / 实体硬件 I2C */
