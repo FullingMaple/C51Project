@@ -19,7 +19,7 @@ static uint8_t xdata OLED_ShadowBuf[OLED_PAGES][OLED_WIDTH];
 /* ================= 硬件 I2C 底层（STC8H I2C 模块，P2.5/P2.4） ================= */
 static uint8_t I2C_FailCount;    /* 连续失败计数（超阈值触发总线恢复） */
 static uint8_t I2C_Recovering;   /* 总线恢复重入保护 */
-uint8_t OLED_I2CTimeout;         /* 诊断：I2C 超时累计次数（每帧显示） */
+uint16_t OLED_I2CTimeout;        /* 诊断：I2C 超时累计次数（每帧显示） */
 static void I2C_BusRecover(void);    /* 前向声明（I2C_Wait 调用） */
 
 static void I2C_Wait(void)
@@ -45,7 +45,7 @@ static void I2C_Wait(void)
             else
             {
                 I2CCFG = 0x00;      /* 复位 I2C 模块 */
-                I2CCFG = 0xCD;
+                I2CCFG = 0xD4;
                 I2CMSST = 0x00;
             }
             return;
@@ -166,8 +166,8 @@ void OLED_Init(void)
 #else
     /* ---- 实体 OLED：SSD1306 硬件 I2C ---- */
     P_SW2 |= 0x10;              /* I2C 功能脚选择 P2.5/P2.4 */
-    I2CCFG = 0xCD;              /* 24MHz @400kHz：MSSPEED=13（FOSC/2/(MSSPEED*2+4)=400k）
-     * 总线异常由 I2C_BusRecover 自动恢复（9 脉冲+重初始化） */
+    I2CCFG = 0xD4;              /* 24MHz @273kHz：MSSPEED=20（FOSC/2/(20*2+4)=273k）
+     * 400kHz(0xCD) 下飞线信号余量不足、I2C 频繁超时（R 计数验证），降速折中 */
     I2CMSST = 0x00;
 
     OLED_Write_Command(0xAE);   /* 关闭显示 */
