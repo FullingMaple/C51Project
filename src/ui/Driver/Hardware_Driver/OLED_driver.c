@@ -19,6 +19,7 @@ static uint8_t xdata OLED_ShadowBuf[OLED_PAGES][OLED_WIDTH];
 /* ================= 硬件 I2C 底层（STC8H I2C 模块，P2.5/P2.4） ================= */
 static uint8_t I2C_FailCount;    /* 连续失败计数（超阈值触发总线恢复） */
 static uint8_t I2C_Recovering;   /* 总线恢复重入保护 */
+uint8_t OLED_I2CTimeout;         /* 诊断：I2C 超时累计次数（每帧显示） */
 static void I2C_BusRecover(void);    /* 前向声明（I2C_Wait 调用） */
 
 static void I2C_Wait(void)
@@ -32,6 +33,7 @@ static void I2C_Wait(void)
         if(++timeout > 6000)
         {
             I2C_FailCount++;
+            OLED_I2CTimeout++;
             if(I2C_FailCount > 5 && !I2C_Recovering)
             {
                 /* 连续失败：GPIO 9 脉冲释放总线 + 重新初始化 SSD1306 */
