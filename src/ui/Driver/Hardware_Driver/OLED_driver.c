@@ -150,6 +150,15 @@ static void OLED_SetPos(uint8_t page)
     OLED_Write_Command(0x10);                   /* 列地址高 4 位 */
 }
 
+/* 设置页地址 + 列范围（水平寻址 0x21 命令）——局部刷新只发变化列段 */
+static void OLED_SetPosRange(uint8_t page, uint8_t col_start, uint8_t col_end)
+{
+    OLED_Write_Command(0xB0 | (page & 0x07));   /* 页地址 */
+    OLED_Write_Command(0x21);                   /* 设置列地址范围 */
+    OLED_Write_Command(col_start);
+    OLED_Write_Command(col_end);
+}
+
 /* ================= 初始化 ================= */
 void OLED_Init(void)
 {
@@ -218,13 +227,18 @@ void OLED_Update(void)
     OLED12864_ShowPicture(0, 0, OLED_WIDTH, OLED_PAGES, &OLED_DisplayBuf[0][0]);
     P22 = 1;
 #else
-    uint8_t page;
+    uint8_t page, c0, c1;
     for(page = 0; page < OLED_PAGES; page++)
     {
         if(memcmp(OLED_ShadowBuf[page], OLED_DisplayBuf[page], OLED_WIDTH) != 0)
         {
-            OLED_SetPos(page);
-            OLED_Write_Data_Bulk(OLED_DisplayBuf[page], OLED_WIDTH);   /* 一次事务发整页 */
+            /* 列级 diff：只发变化列段（动画时传输减半，静态 FPS 页只发几列） */
+            c0 = 0;
+            while(c0 < OLED_WIDTH && OLED_ShadowBuf[page][c0] == OLED_DisplayBuf[page][c0]) c0++;
+            c1 = OLED_WIDTH - 1;
+            while(c1 > c0 && OLED_ShadowBuf[page][c1] == OLED_DisplayBuf[page][c1]) c1--;
+            OLED_SetPosRange(page, c0, c1);
+            OLED_Write_Data_Bulk(&OLED_DisplayBuf[page][c0], c1 - c0 + 1);
             memcpy(OLED_ShadowBuf[page], OLED_DisplayBuf[page], OLED_WIDTH);
         }
     }
@@ -235,7 +249,7 @@ void OLED_Update(void)
 void OLED_UpdateArea(uint8_t X, uint8_t Y, uint8_t Width, uint8_t Height)
 {
 #if(!VIRTUAL_OLED)
-    uint8_t page, page_start, page_end;
+    uint8_t page, page_start, page_end, c0, c1;
     X = X;    Width = Width;    /* 当前 diff 按整页(128列)比较，列范围参数暂用不到 */
 
     page_start = (Y >> 3) & 0x07;
@@ -245,8 +259,12 @@ void OLED_UpdateArea(uint8_t X, uint8_t Y, uint8_t Width, uint8_t Height)
     {
         if(memcmp(OLED_ShadowBuf[page], OLED_DisplayBuf[page], OLED_WIDTH) != 0)
         {
-            OLED_SetPos(page);
-            OLED_Write_Data_Bulk(OLED_DisplayBuf[page], OLED_WIDTH);
+            c0 = 0;
+            while(c0 < OLED_WIDTH && OLED_ShadowBuf[page][c0] == OLED_DisplayBuf[page][c0]) c0++;
+            c1 = OLED_WIDTH - 1;
+            while(c1 > c0 && OLED_ShadowBuf[page][c1] == OLED_DisplayBuf[page][c1]) c1--;
+            OLED_SetPosRange(page, c0, c1);
+            OLED_Write_Data_Bulk(&OLED_DisplayBuf[page][c0], c1 - c0 + 1);
             memcpy(OLED_ShadowBuf[page], OLED_DisplayBuf[page], OLED_WIDTH);
         }
     }
