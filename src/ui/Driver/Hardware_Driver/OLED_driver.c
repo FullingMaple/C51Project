@@ -224,9 +224,14 @@ static uint8_t OLED_FrameCounter;   /* 帧计数：周期全刷自愈（I2C 偶�
 void OLED_Update(void)
 {
 #if(VIRTUAL_OLED)
-    /* 虚拟 OLED：整屏经 USB-CDC 发送（虚拟屏本身是整屏渲染） */
+    /* 虚拟 OLED：整屏经 USB-CDC 发送（虚拟屏本身是整屏渲染）
+     * USB 忙/未枚举时跳过本帧：库发送为阻塞式，渐隐期间每帧全屏发送
+     * 若主机读取不及时会缓冲满阻塞 → 主循环卡死 */
     P22 = 0;
-    OLED12864_ShowPicture(0, 0, OLED_WIDTH, OLED_PAGES, &OLED_DisplayBuf[0][0]);
+    if(!bUsbInBusy && DeviceState == DEVSTATE_CONFIGURED)
+    {
+        OLED12864_ShowPicture(0, 0, OLED_WIDTH, OLED_PAGES, &OLED_DisplayBuf[0][0]);
+    }
     P22 = 1;
 #else
     uint8_t page, c0, c1;
