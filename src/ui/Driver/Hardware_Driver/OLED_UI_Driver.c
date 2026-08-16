@@ -87,9 +87,9 @@ void Driver_IRScan(void)            /* Timer0 20ms 中断内调用 */
         {
             IR_LogicalKey = logical;
             IR_HoldTick = 2;            /* 模拟按下 40ms */
-            /* 响铃规则：新键码 或 同键重按（距上次 >500ms = 松开重按）响；
-             * 按住连发（<500ms 同键帧）静音，避免嘀嘀嘀 */
-            if(raw != IR_LastRaw || IR_LastRawTick >= 25)
+            /* 响铃规则：新键码 或 同键重按（距上次 >200ms = 松开重按）响；
+             * 按住连发（<200ms 同键帧）静音，避免嘀嘀嘀 */
+            if(raw != IR_LastRaw || IR_LastRawTick >= 10)
                 Buzzer_Beep();
             IR_LastRaw = raw;
             IR_LastRawTick = 0;
