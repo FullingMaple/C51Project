@@ -8,6 +8,8 @@
 #include "stc8h.h"
 #include "OLED_driver.h"
 #include "OLED_UI_Launcher.h"
+#include "OLED_UI_Driver.h"
+#include "IR_Remote.h"
 
 /* USB-CDC 库要求实现的 STC-ISP 用户命令接口（弱符号） */
 char *USER_STCISPCMD = "@STCISP#";
@@ -24,6 +26,8 @@ void System_Init(void)
     OLED_IO_MODE();             /* P2.2~P2.5 开漏 + 实验箱外部上拉 */
 
     OLED_Init();                /* 双后端：虚拟 USB-CDC / 实体硬件 I2C */
+    Buzzer_Init();              /* P5.4 按键音（设置页"提示音"开关） */
+    IR_Init();                  /* 红外遥控：P3.5 + T1 100us 采样解码 */
 }
 
 void main(void)
