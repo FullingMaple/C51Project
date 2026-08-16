@@ -146,11 +146,16 @@
 
 **SPI 根治依据**：I2C 400kHz 是 SSD1306 规格上限（飞线余量不足 → 偶发事务失败 → 2ms 超时 × 渐隐动画事务风暴 → 卡顿）；SPI 全屏 <1ms（比 I2C 快 20 倍以上）且无 I2C 总线锁死故障模式 → 事务量不再构成瓶颈
 
-**改 SPI 待办清单**：
-1. OLED_driver.c 加 SPI 后端（STC8H 硬件 SPI，分频 ~3MHz 稳妥；SSD1306 SPI 最高 10MHz）
-2. 接线：J11 7 孔座 SPI 位（1=GND 2=VCC 3=SCLK 4=SDA 5=RES 6=DC 7=CS）——确认 R173/R174 焊好
-3. 显示方向/初始化序列复用（0xA1/0xC8/0x8D 0x14 不变）
-4. 之后恢复 dev 最新（ed09256）继续功能开发（遥控已集成完成）
+**✅ SPI 后端已完成（2026-08-16，双模式构建验证通过）**：
+- config.h：`OLED_IF_SPI` 宏（1=SPI / 0=I2C 可切换）+ 引脚模式分支
+- OLED_driver.c：SPI 后端（官方 69 号例程 SPI 版移植）——SPI1 硬件 6MHz（4T）+ 模式 0 + MSB 先
+  - 引脚：SCLK=P2.5（SPI1 组1）MOSI=P2.3 RES=P2.4 DC=P3.4 CS=P1.1（后 3 根 GPIO）
+  - I2C 辅助函数 `#if !OLED_IF_SPI` 包裹（SPI 下自动裁剪）；初始化序列/强制全刷/diff/周期全刷共用
+  - 构建：SPI 0 Error/2 Warning（code 41771），I2C 0 Error/8 Warning（42013）无回归
+- **接线（模块到货后）**：SSD1315 7 针模块直插 J11 7 孔座 SPI 位
+  （1=GND 2=VCC 3=SCLK 4=D1(MOSI) 5=RES 6=DC 7=CS），实验箱出厂 R173/R174（SPI 档）已焊，零焊接
+- **注意**：SSD1315 与 SSD1306 指令集兼容（初始化序列共用）；若显示异常优先查方向（0xA1/0xC8）与 RES 时序（模块 RES 脚需要上电复位脉冲，驱动已含 0xAE→0xAF 序列，若首次不亮检查 RST 引脚电平）
+- 之后恢复 dev 最新（ed09256）继续功能开发（遥控已集成完成）
 
 ## 5. 剩余事项（可选）
 

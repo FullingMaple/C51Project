@@ -22,6 +22,37 @@ static uint8_t I2C_Recovering;   /* 总线恢复重入保护 */
 uint16_t OLED_I2CTimeout;        /* 诊断：I2C 超时累计次数（每帧显示） */
 static void I2C_BusRecover(void);    /* 前向声明（I2C_Wait 调用） */
 
+/* ================= SPI 后端（OLED_IF_SPI=1，官方 69 号例程 SPI 版） =================
+ * SPI1 硬件：引脚组 1（SS=P2.2 MISO=P2.4 MOSI=P2.3 SCLK=P2.5），4T = 6MHz
+ * RES(P2.4)/DC(P3.4)/CS(P1.1) 用 GPIO；模式 0（CPOL=0 CPHA=0），MSB 先 */
+#if(OLED_IF_SPI)
+#define SPIF  0x80
+#define WCOL  0x40
+
+static void OLED_SPI_Init(void)
+{
+    P_SW1 = (P_SW1 & ~(3 << 2)) | (1 << 2);     /* SPI1 引脚组 1 */
+    SPCTL |=  (1 << 7);                         /* SSIG=1：忽略 SS，主机 */
+    SPCTL |=  (1 << 6);                         /* SPEN=1 */
+    SPCTL &= ~(1 << 5);                         /* MSB 先 */
+    SPCTL |=  (1 << 4);                         /* MSTR=1 主机 */
+    SPCTL &= ~(1 << 3);                         /* CPOL=0 */
+    SPCTL &= ~(1 << 2);                         /* CPHA=0 */
+    SPCTL = (SPCTL & ~3) | 0;                   /* 4T = 6MHz（SSD1306/1315 上限 10MHz 安全） */
+    OLED_SCLK = 0;
+    OLED_SDIN = 1;
+    SPSTAT = SPIF + WCOL;                       /* 清标志 */
+}
+
+static void OLED_SPI_Send(uint8_t dat)          /* 单字节发送（等 SPIF） */
+{
+    SPDAT = dat;
+    while((SPSTAT & SPIF) == 0);
+    SPSTAT = SPIF + WCOL;
+}
+#endif
+
+#if(!OLED_IF_SPI)
 static void I2C_Wait(void)
 {
     uint16_t timeout = 0;
@@ -45,7 +76,7 @@ static void I2C_Wait(void)
             else
             {
                 I2CCFG = 0x00;      /* 复位 I2C 模块 */
-                I2CCFG = 0xCD;
+                I2CCFG = 0xD4;  /* 临时诊断：273kHz */
                 I2CMSST = 0x00;
             }
             return;
@@ -102,9 +133,16 @@ static void I2C_RecvACK(void)
     I2CMSCR = 0x03;             /* 发送读 ACK 命令 */
     I2C_Wait();
 }
+#endif
 
 static void OLED_Write_Command(uint8_t dat)
 {
+#if(OLED_IF_SPI)
+    OLED_DC = 0;                    /* 命令 */
+    OLED_CS = 0;
+    OLED_SPI_Send(dat);
+    OLED_CS = 1;
+#else
     I2C_Start();
     I2C_SendData(OLED_ADDR);    /* 从机地址，RW=0 */
     I2C_RecvACK();
@@ -113,10 +151,17 @@ static void OLED_Write_Command(uint8_t dat)
     I2C_SendData(dat);
     I2C_RecvACK();
     I2C_Stop();
+#endif
 }
 
 static void OLED_Write_Data(uint8_t dat)
 {
+#if(OLED_IF_SPI)
+    OLED_DC = 1;                    /* 数据 */
+    OLED_CS = 0;
+    OLED_SPI_Send(dat);
+    OLED_CS = 1;
+#else
     I2C_Start();
     I2C_SendData(OLED_ADDR);
     I2C_RecvACK();
@@ -125,12 +170,22 @@ static void OLED_Write_Data(uint8_t dat)
     I2C_SendData(dat);
     I2C_RecvACK();
     I2C_Stop();
+#endif
 }
 
 /* 批量写数据：一次 Start 连续发送 len 字节（SSD1306 水平寻址自动递增列地址）
  * 性能关键：全屏 8 页从 ~23ms 降到 ~4ms（原来每字节一次 start/stop/addr 事务） */
 static void OLED_Write_Data_Bulk(const uint8_t *buf, uint16_t len)
 {
+#if(OLED_IF_SPI)
+    OLED_DC = 1;                    /* 数据，CS 保持低连续发送 */
+    OLED_CS = 0;
+    while(len--)
+    {
+        OLED_SPI_Send(*buf++);
+    }
+    OLED_CS = 1;
+#else
     I2C_Start();
     I2C_SendData(OLED_ADDR);
     I2C_RecvACK();
@@ -142,6 +197,7 @@ static void OLED_Write_Data_Bulk(const uint8_t *buf, uint16_t len)
         I2C_RecvACK();
     }
     I2C_Stop();
+#endif
 }
 
 /* 设置页地址（0~7），列从 0 开始 */
@@ -164,11 +220,17 @@ void OLED_Init(void)
     OLED12864_DisplayOn();      /* 打开虚拟 OLED 显示 */
     OLED12864_DisplayContent(); /* 显示屏幕内容 */
 #else
-    /* ---- 实体 OLED：SSD1306 硬件 I2C ---- */
+    /* ---- 实体 OLED ---- */
+#if(OLED_IF_SPI)
+    /* SPI：硬件 SPI 6MHz（实验箱出厂 R173/R174 SPI 档，7 孔座直插） */
+    OLED_SPI_Init();
+#else
+    /* I2C：硬件 I2C（需 R175/R176 或飞线） */
     P_SW2 |= 0x10;              /* I2C 功能脚选择 P2.5/P2.4 */
-    I2CCFG = 0xCD;              /* 24MHz @400kHz：MSSPEED=13（FOSC/2/(13*2+4)=400k）
+    I2CCFG = 0xD4;  /* 临时诊断：273kHz */              /* 24MHz @400kHz：MSSPEED=13（FOSC/2/(13*2+4)=400k）
      * 再次尝试 400kHz（整页 diff + 总线恢复兜底）；不行回 273kHz(0xD4) */
     I2CMSST = 0x00;
+#endif
 
     OLED_Write_Command(0xAE);   /* 关闭显示 */
     OLED_Write_Command(0x20);   /* 寻址模式：水平 */
