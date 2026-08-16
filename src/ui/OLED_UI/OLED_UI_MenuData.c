@@ -10,6 +10,7 @@
 
 extern bool ColorMode;
 extern bool OLED_UI_FpsShow;
+extern bool SoundEnable;
 extern int16_t OLED_UI_Brightness;
 
 #define SPEED 8
@@ -49,7 +50,7 @@ MenuItem SettingsMenuItems[] = {
     {"深浅色", NULL,              NULL, &ColorMode,         NULL, NULL, NULL, NULL, 0, 0},
     {"显示帧率", NULL,            NULL, &OLED_UI_FpsShow,   NULL, NULL, NULL, NULL, 0, 0},
     {"语言",   NULL,              NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
-    {"提示音", NULL,              NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
+    {"提示音", NULL,              NULL, &SoundEnable, NULL, NULL, NULL, NULL, 0, 0},
     {"[返回]", OLED_UI_Back,      NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
     {NULL}
 };

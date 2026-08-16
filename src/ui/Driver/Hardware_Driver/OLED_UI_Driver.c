@@ -14,6 +14,7 @@
 #include "config.h"
 #include "stc8h.h"
 #include "intrins.h"
+#include "IR_Remote.h"
 
 /* ================= 系统 tick（20ms 节拍 ×20 = 1ms） ================= */
 static volatile uint32_t TickCounter;      /* 20ms 计数 */
@@ -27,6 +28,74 @@ uint32_t GetTick(void)
 {
     return TickCounter * 20;
 }
+
+/* ================= 按键音（P5.4 有源蜂鸣器） ================= */
+sbit Buzzer = P5^4;
+static uint8_t BuzzerCnt;           /* 剩余鸣响节拍（20ms 单位） */
+bool SoundEnable = true;            /* 提示音总开关（设置页绑定） */
+
+void Buzzer_Init(void)
+{
+    P5M1 &= ~0x10;                  /* P5.4 推挽输出（有源蜂鸣器高电平响） */
+    P5M0 |= 0x10;
+    Buzzer = 0;
+}
+
+void Buzzer_Beep(void)
+{
+    if(!SoundEnable) return;        /* 开关关闭则静音 */
+    Buzzer = 1;
+    BuzzerCnt = 3;                  /* 鸣 60ms */
+}
+
+void Buzzer_Tick(void)              /* Timer0 20ms 中断内调用 */
+{
+    if(BuzzerCnt && (--BuzzerCnt == 0)) Buzzer = 0;
+}
+
+/* ================= 红外遥控桥接（遥控为主、键盘兜底） =================
+ * NEC 无"松开"信号：收到一帧 → 逻辑键按下并保持 40ms 后自动松开；
+ * 按住不放（重复帧 108ms/帧）→ 逻辑键周期刷新 → 菜单约 9 键/秒连发 */
+static uint8_t IR_LogicalKey;       /* 当前遥控逻辑键（0=无） */
+static uint8_t IR_HoldTick;         /* 模拟松开计时（20ms 单位） */
+static uint8_t IR_LastRaw;          /* 上次键码（重复帧去重：不重复响铃） */
+
+static uint8_t IR_KeyToLogical(uint8_t nec_key)
+{
+    switch(nec_key)
+    {
+        case IR_KEY_UP:     return KEY_ADC_UP;
+        case IR_KEY_DOWN:   return KEY_ADC_DOWN;
+        case IR_KEY_OK:
+        case IR_KEY_RIGHT:  return KEY_ADC_ENTER;
+        case IR_KEY_LEFT:   return KEY_ADC_BACK;
+        default:            return 0;   /* 数字键等暂不映射（计算器/游戏预留） */
+    }
+}
+
+void Driver_IRScan(void)            /* Timer0 20ms 中断内调用 */
+{
+    uint8_t raw, logical;
+
+    raw = IR_GetKey();
+    if(raw != IR_KEY_NONE)
+    {
+        logical = IR_KeyToLogical(raw);
+        if(logical)
+        {
+            IR_LogicalKey = logical;
+            IR_HoldTick = 2;            /* 模拟按下 40ms */
+            if(raw != IR_LastRaw)       /* 新键码才响铃（重复帧静音） */
+                Buzzer_Beep();
+            IR_LastRaw = raw;
+        }
+    }
+    else if(IR_HoldTick)
+    {
+        if(--IR_HoldTick == 0) IR_LogicalKey = 0;
+    }
+}
+
 
 /* ================= Timer0 20ms 中断初始化 =================
  * 24MHz @12T：20ms = 24000000/12 * 0.02 = 40000 计数
@@ -114,15 +183,16 @@ void Driver_KeyScan(void)
     Key_State1 = i;
     if(Key_State3 == Key_State2 && Key_State2 == Key_State1)
     {
+        if(Key_Hold == 0) Buzzer_Beep();    /* 新键按下沿响铃（长按连发不重复响） */
         Key_Hold = Key_State1;
     }
 }
 
-/* 按键状态：0=按下 1=松开（KEY_ADC_* 键值见 config.h，按实验箱布局调整） */
-uint8_t Key_GetUpStatus(void)    { return (Key_Hold == KEY_ADC_UP)    ? 0 : 1; }
-uint8_t Key_GetDownStatus(void)  { return (Key_Hold == KEY_ADC_DOWN)  ? 0 : 1; }
-uint8_t Key_GetEnterStatus(void) { return (Key_Hold == KEY_ADC_ENTER) ? 0 : 1; }
-uint8_t Key_GetBackStatus(void)  { return (Key_Hold == KEY_ADC_BACK)  ? 0 : 1; }
+/* 按键状态：0=按下 1=松开（键盘 || 遥控 双输入合并；KEY_ADC_* 见 config.h） */
+uint8_t Key_GetUpStatus(void)    { return ((Key_Hold == KEY_ADC_UP)    || (IR_LogicalKey == KEY_ADC_UP))    ? 0 : 1; }
+uint8_t Key_GetDownStatus(void)  { return ((Key_Hold == KEY_ADC_DOWN)  || (IR_LogicalKey == KEY_ADC_DOWN))  ? 0 : 1; }
+uint8_t Key_GetEnterStatus(void) { return ((Key_Hold == KEY_ADC_ENTER) || (IR_LogicalKey == KEY_ADC_ENTER)) ? 0 : 1; }
+uint8_t Key_GetBackStatus(void)  { return ((Key_Hold == KEY_ADC_BACK)  || (IR_LogicalKey == KEY_ADC_BACK))  ? 0 : 1; }
 
 /* ================= 编码器（实验箱无，空实现） ================= */
 void Encoder_Init(void)     {}

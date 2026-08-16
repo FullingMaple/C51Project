@@ -203,6 +203,19 @@ void OLED_Init(void)
 #endif
 
     memset(OLED_ShadowBuf, 0, sizeof(OLED_ShadowBuf));
+    /* 强制清屏一次：SSD1306 GDDRAM 上电为随机数据，diff 只发"变化页"会漏刷，
+     * 必须全刷全 0 清掉噪点（正式固件立刻渲染所以没暴露，清屏后不渲染会现形） */
+#if(!VIRTUAL_OLED)
+    {
+        uint8_t page;
+        memset(OLED_DisplayBuf, 0, sizeof(OLED_DisplayBuf));
+        for(page = 0; page < OLED_PAGES; page++)
+        {
+            OLED_SetPos(page);
+            OLED_Write_Data_Bulk(OLED_DisplayBuf[page], OLED_WIDTH);
+        }
+    }
+#endif
 }
 
 /* 清影子缓冲：OLED_Clear 后同步调用，diff 对比才不会把全屏当变化 */

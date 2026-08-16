@@ -26,5 +26,7 @@ void Timer0_Isr(void) interrupt 1
 {
     Driver_TickHandler();       /* 系统 tick 递增（GetTick 毫秒源） */
     Driver_KeyScan();           /* ADC 键盘采样 + 三态滤波（20ms 一次） */
+    Driver_IRScan();            /* 红外遥控轮询（NEC 帧→逻辑键，遥控为主/键盘兜底） */
+    Buzzer_Tick();              /* 按键音节拍（60ms 自动关） */
     OLED_UI_InterruptHandler();
 }

@@ -28,5 +28,12 @@ uint32_t GetTick(void);             /* 系统毫秒计数（Timer0 20ms 节拍 �
 /* ---- Timer0 中断内调用（见 OLED_UI_Launcher.c 的 Timer0_Isr）---- */
 void     Driver_TickHandler(void);  /* tick 计数递增 */
 void     Driver_KeyScan(void);      /* ADC 键盘采样 + 三态滤波 */
+void     Driver_IRScan(void);       /* 红外遥控轮询（NEC 帧→逻辑键→模拟松开） */
+void     Buzzer_Tick(void);         /* 按键音节拍（60ms 后自动关） */
+
+/* ---- 按键音（设置页"提示音"开关绑定，默认开）---- */
+void     Buzzer_Init(void);         /* P5.4 推挽输出 */
+void     Buzzer_Beep(void);         /* 触发一次短鸣（受 SoundEnable 控制） */
+extern bool SoundEnable;            /* 提示音总开关（OLED_UI_MenuData 绑定） */
 
 #endif
