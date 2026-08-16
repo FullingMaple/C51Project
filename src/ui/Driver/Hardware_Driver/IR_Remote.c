@@ -43,6 +43,7 @@ static uint8_t IR_DataShift;        /* 位移寄存器 */
 static bit P_IR_RX_prev;            /* 上次采样电平（替代官方 F0，防与主循环冲突） */
 static bit B_IR_Sync;               /* 已收引导码标志 */
 static bit B_IR_Press;              /* 收到有效按键标志 */
+static bit B_IR_HaveFrame;          /* 收到过有效帧（重复帧连发判断依据） */
 static uint8_t IR_code;             /* 命令码 */
 static uint16_t UserCode;           /* 用户码 */
 static uint16_t IR_EdgeCnt;         /* 诊断：下降沿计数（P3.5 信号活动指示） */
@@ -63,10 +64,15 @@ static void IR_RX_NEC(void)
             B_IR_Sync = 0;
         else if(SampleTime >= D_IR_SYNC_MIN)    /* 引导码范围 */
         {
-            if(SampleTime >= D_IR_SYNC_DIV)     /* 9ms+4.5ms 才认引导码 */
+            if(SampleTime >= D_IR_SYNC_DIV)     /* 9ms+4.5ms 才认引导码（新帧） */
             {
                 B_IR_Sync = 1;
                 IR_BitCnt = D_IR_BIT_NUMBER;    /* 装载 32 位 */
+            }
+            else if(B_IR_HaveFrame)             /* 9ms+2.25ms = 重复帧（按住不放）：
+                                                 * 重复触发上一键，实现按住连发 */
+            {
+                B_IR_Press = 1;                 /* IR_code 保持上一帧键码 */
             }
         }
         else if(B_IR_Sync)                      /* 已收引导码：数据位 */
@@ -86,6 +92,7 @@ static void IR_RX_NEC(void)
                         UserCode = ((uint16_t)IR_UserH << 8) + IR_UserL;
                         IR_code = IR_data;
                         B_IR_Press = 1;         /* 按键有效 */
+                        B_IR_HaveFrame = 1;     /* 记录有效帧（重复帧连发依据） */
                     }
                 }
                 else if((IR_BitCnt & 7) == 0)   /* 收满 1 字节 */
