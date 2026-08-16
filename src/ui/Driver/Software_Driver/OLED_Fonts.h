@@ -49,19 +49,7 @@ extern code uint8_t Image_gamepad[];
 extern code uint8_t Image_calc2[];
 extern code uint8_t Image_thermo[];
 extern code uint8_t Image_gear[];
-extern code uint8_t Image_window[];
-extern code uint8_t Image_cube[];
 extern code uint8_t Image_more[];
-extern code uint8_t Image_sleep[];
-
-
-extern code uint8_t Image_settings_64[];
-extern code uint8_t Image_calc_64[];
-extern code uint8_t Image_wechat_64[];
-extern code uint8_t Image_alipay_64[];
-extern code uint8_t Image_night_64[];
-extern code uint8_t Image_more_64[];
-
 /*按照上面的格式，在这个位置加入新的图像数据声明*/
 //...
 
