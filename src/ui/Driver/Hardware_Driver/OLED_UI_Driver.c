@@ -59,7 +59,8 @@ void Buzzer_Tick(void)              /* Timer0 20ms 中断内调用 */
  * 按住不放（重复帧 108ms/帧）→ 逻辑键周期刷新 → 菜单约 9 键/秒连发 */
 static uint8_t IR_LogicalKey;       /* 当前遥控逻辑键（0=无） */
 static uint8_t IR_HoldTick;         /* 模拟松开计时（20ms 单位） */
-static uint8_t IR_LastRaw;          /* 上次键码（重复帧去重：不重复响铃） */
+static uint8_t IR_LastRaw;          /* 上次键码（响铃去重用） */
+static uint8_t IR_LastRawTick;      /* 距上次同键帧的节拍数（20ms 单位） */
 
 static uint8_t IR_KeyToLogical(uint8_t nec_key)
 {
@@ -86,14 +87,18 @@ void Driver_IRScan(void)            /* Timer0 20ms 中断内调用 */
         {
             IR_LogicalKey = logical;
             IR_HoldTick = 2;            /* 模拟按下 40ms */
-            if(raw != IR_LastRaw)       /* 新键码才响铃（重复帧静音） */
+            /* 响铃规则：新键码 或 同键重按（距上次 >500ms = 松开重按）响；
+             * 按住连发（<500ms 同键帧）静音，避免嘀嘀嘀 */
+            if(raw != IR_LastRaw || IR_LastRawTick >= 25)
                 Buzzer_Beep();
             IR_LastRaw = raw;
+            IR_LastRawTick = 0;
         }
     }
-    else if(IR_HoldTick)
+    else
     {
-        if(--IR_HoldTick == 0) IR_LogicalKey = 0;
+        if(IR_HoldTick && (--IR_HoldTick == 0)) IR_LogicalKey = 0;
+        if(IR_LastRawTick < 0xFF) IR_LastRawTick++;
     }
 }
 
