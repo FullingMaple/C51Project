@@ -56,10 +56,10 @@ MenuItem SettingsMenuItems[] = {
 
 /* ================= 关于页 ================= */
 MenuItem AboutThisDeviceMenuItems[] = {
-    {"-[项目] 电子手表式UI菜单", NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
-    {" MCU: STC8H8K64U @24MHz", NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
-    {" 屏: 0.96 SSD1306 OLED",  NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
-    {" 框架: OLED_UI 0.2.1",    NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
+    {" 电子手表式UI菜单", NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
+    {" MCU: STC8H8K64U", NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
+    {" 屏: 0.96 SSD1306",  NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
+    {" 框架: OLED_UI",    NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
     {" 许可: Apache 2.0",       NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
     {"[返回]", OLED_UI_Back,    NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
     {NULL}
