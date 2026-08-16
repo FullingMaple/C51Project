@@ -29,28 +29,29 @@ uint32_t GetTick(void)
     return TickCounter * 20;
 }
 
-/* ================= 按键音（P5.4 有源蜂鸣器） ================= */
+/* ================= 按键音（P5.4 有源蜂鸣器） =================
+ * 电路：P5.4 → 1N5819 → BEEP1 → SYS-VCC——低电平导通响（P5.4=0 响） */
 sbit Buzzer = P5^4;
 static uint8_t BuzzerCnt;           /* 剩余鸣响节拍（20ms 单位） */
 bool SoundEnable = true;            /* 提示音总开关（设置页绑定） */
 
 void Buzzer_Init(void)
 {
-    P5M1 &= ~0x10;                  /* P5.4 推挽输出（有源蜂鸣器高电平响） */
+    P5M1 &= ~0x10;                  /* P5.4 推挽输出 */
     P5M0 |= 0x10;
-    Buzzer = 0;
+    Buzzer = 1;                     /* 初始静音（低电平响） */
 }
 
 void Buzzer_Beep(void)
 {
     if(!SoundEnable) return;        /* 开关关闭则静音 */
-    Buzzer = 1;
+    Buzzer = 0;                     /* 响（低电平） */
     BuzzerCnt = 3;                  /* 鸣 60ms */
 }
 
 void Buzzer_Tick(void)              /* Timer0 20ms 中断内调用 */
 {
-    if(BuzzerCnt && (--BuzzerCnt == 0)) Buzzer = 0;
+    if(BuzzerCnt && (--BuzzerCnt == 0)) Buzzer = 1;   /* 计时到恢复静音 */
 }
 
 /* ================= 红外遥控桥接（遥控为主、键盘兜底） =================
