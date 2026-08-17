@@ -253,8 +253,8 @@ void OLED_Init(void)
     OLED_Write_Command(0x3F);
     OLED_Write_Command(0xD3);   /* 显示偏移 0 */
     OLED_Write_Command(0x00);
-    OLED_Write_Command(0xD5);   /* 时钟分频 0x80 */
-    OLED_Write_Command(0x80);
+    OLED_Write_Command(0xD5);   /* 时钟分频：0xF0 = 倍频 150%（面板刷新率提升，帧率优化 Step1） */
+    OLED_Write_Command(0xF0);
     OLED_Write_Command(0xD9);   /* 预充电 0xF1 */
     OLED_Write_Command(0xF1);
     OLED_Write_Command(0xDA);   /* COM 引脚配置（半边亮改 0x02） */

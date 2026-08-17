@@ -80,7 +80,14 @@ void GetFPS(void){
 void OLED_UI_ShowFPS(void){
     OLED_FPS.count ++;
 	if (OLED_UI_FpsShow){
-		OLED_Printf(110,0,OLED_6X8_HALF,"%3d",OLED_FPS.value);
+		/* 手写 %3d：C51 的 vsprintf 每帧调用太慢（帧率优化 Step1） */
+		char buf[4];
+		int16_t v = OLED_FPS.value;
+		buf[3] = 0;
+		buf[2] = (char)('0' + v % 10);  v /= 10;
+		buf[1] = (char)('0' + v % 10);  v /= 10;
+		buf[0] = (char)('0' + v % 10);
+		OLED_ShowString(110, 0, buf, OLED_6X8_HALF);
 	}
 }
 /**
@@ -1396,9 +1403,11 @@ void OLED_UI_CreateWindow(MenuWindow* window){
  * @param 无
  * @return 无
  */
+uint8_t Diag_FadeOutSeq;              /* 诊断：FadeOut 序列号（原 static 提升，供调试显示） */
+
 void RunFadeOut(void){
 
-	static uint8_t FadeOut_Seq;
+	uint8_t FadeOut_Seq = Diag_FadeOutSeq;
 	static uint32_t FadeOut_Seq_StartTick;
 	static int16_t FadeOut_x0, FadeOut_y0, FadeOut_width, FadeOut_height;
 
@@ -1411,6 +1420,7 @@ void RunFadeOut(void){
 		if (FadeOut_Seq != 0){	//如果当前不是步骤0
 			if ((FadeOut_Seq_StartTick + FADEOUT_TIME) < GetTick()){	//计时FADEOUT_TIME毫秒
 				FadeOut_Seq++;
+				Diag_FadeOutSeq = FadeOut_Seq;
 				FadeOut_Seq_StartTick = GetTick();	//记录每一步的开始时间
 			}
 		}
@@ -1468,10 +1478,12 @@ void RunFadeOut(void){
 
 			}
 			FadeOut_Seq++;
+			Diag_FadeOutSeq = FadeOut_Seq;
 		}else
 		if(FadeOut_Seq == 6){	//步骤6：渐隐完毕，复位变量
 			OLED_UI_FadeOut_Masking(FadeOut_x0, FadeOut_y0, FadeOut_width, FadeOut_height, 5);	//这一帧应与步骤5一样显示全黑
 			FadeOut_Seq = 0;
+			Diag_FadeOutSeq = FadeOut_Seq;
 			//如果当前菜单是列表类
 			if(CurrentMenuPage->General_MenuType == MENU_TYPE_LIST){
 				//当前菜单项的页面类型是列表类的情况下，按下了确认按键
@@ -1608,9 +1620,42 @@ void MoveMenuElements(void){
  * @note 该函数需要放在主循环中调用，以便实现UI的刷新
  * @return 无
  */
+/* 帧率优化 Step2：静态空闲判定（严格——动画/窗口/事件任一发生都算动态）
+ * 全部到位才跳过重绘：渐隐结束、进入事件结束、无窗口、菜单框/页面滑动到位 */
+static bool OLED_UI_IsStaticIdle(void)
+{
+    float dx, dy;
+
+    if(FadeOutFlag != FLAGEND) return false;        /* 渐隐动画中 */
+    if(KeyEnterFlag != FLAGEND) return false;       /* 进入事件处理中 */
+    if(CurrentWindow != NULL) return false;         /* 窗口组件打开（进度条动画） */
+
+    /* 菜单框动画是否到位（fabs < 0.5px 视为到位，与插值收敛阈值同量级） */
+    dx = OLED_UI_MenuFrame.CurrentArea.X - OLED_UI_MenuFrame.TargetArea.X;
+    dy = OLED_UI_MenuFrame.CurrentArea.Y - OLED_UI_MenuFrame.TargetArea.Y;
+    if(fabs(dx) > 0.5f || fabs(dy) > 0.5f) return false;
+    dx = OLED_UI_MenuFrame.CurrentArea.Width  - OLED_UI_MenuFrame.TargetArea.Width;
+    dy = OLED_UI_MenuFrame.CurrentArea.Height - OLED_UI_MenuFrame.TargetArea.Height;
+    if(fabs(dx) > 0.5f || fabs(dy) > 0.5f) return false;
+
+    /* 页面滑动是否到位 */
+    dx = OLED_UI_PageStartPoint.CurrentPoint.X - OLED_UI_PageStartPoint.TargetPoint.X;
+    dy = OLED_UI_PageStartPoint.CurrentPoint.Y - OLED_UI_PageStartPoint.TargetPoint.Y;
+    if(fabs(dx) > 0.5f || fabs(dy) > 0.5f) return false;
+
+    return true;
+}
+
 void OLED_UI_MainLoop(void){
 	//清屏
-	OLED_Clear();
+		/* 帧率优化 Step2：静态空闲时跳过清屏+全量重绘，只刷 FPS（diff 只发变化页）
+	 * ——静态帧率突破 CPU 重绘瓶颈；按键/动画/窗口发生时自动恢复重绘 */
+	if(OLED_UI_IsStaticIdle()){
+		OLED_UI_ShowFPS();
+		OLED_Update();
+		return;
+	}
+OLED_Clear();
 
 	
 
