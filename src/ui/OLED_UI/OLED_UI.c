@@ -16,7 +16,6 @@ static code uint8_t patterns[5][2][2] = {
     {{1, 1}, {1, 1}}
 };
 
-
 #ifdef OLED_UI
 /**
  * @brief 本项目开源地址：
@@ -29,11 +28,9 @@ OLED_Key OLED_UI_LastKey = {1,1,1,1};								//用于存储上一轮按键状态的结构体,默
 MenuPage*  CurrentMenuPage = NULL;									//全局结构体指针，当前页面的指针
 MenuWindow *CurrentWindow = NULL;									//全局结构体指针，当前窗口的指针
 MutexFlag KeyEnterFlag = FLAGEND;
-/* 诊断：亮度窗口调节定位（16000+ bug） */
 MutexFlag FadeOutFlag = FLAGEND;									//渐隐效果的互斥锁，互斥锁为FLAGSTART时表示正在执行渐隐效果
 bool ColorMode = DARKMODE;											//全局布尔型数据，存储当前显示模式，true为深色模式，false为浅色模式
 bool OLED_UI_FpsShow = true;										//全局布尔型数据，用于控制是否显示帧率
-int16_t OLED_UI_Brightness = 100;									//全局变量，存储当前屏幕亮度
 OLED_UI_WindowSustainCounter OLED_SustainCounter = {0,false};		//用于存储窗口持续时间的结构体
 int tmpi=0;                                                       	//Gif动画缓速播放temp值
 
@@ -54,8 +51,6 @@ OLED_ChangeDistance OLED_UI_ProbWidth;
 OLED_ChangePoint OLED_UI_PageStartPoint ;
 // OLED_UI_LineStep是用于存储行间距的结构体，控制行间距的变化
 OLED_ChangeDistance OLED_UI_LineStep;
-
-
 
 /**
  * @brief 获取当前屏幕刷新率，结果存储在全局变量OLED_FPS.value中
@@ -212,7 +207,6 @@ void OLED_UI_FadeOut_Masking(int16_t x0, int16_t y0, int16_t width, int16_t heig
         return;
     }
 
-
     // 计算边界
     xEnd = x0 + width;
     yEnd = y0 + height;
@@ -236,7 +230,6 @@ void OLED_UI_FadeOut_Masking(int16_t x0, int16_t y0, int16_t width, int16_t heig
     }
 }
 
-
 /**
  * @brief 获取菜单项结构体数组的最后一个元素的ID
  * @param items 结构体数组MenuItem的指针
@@ -249,7 +242,6 @@ MenuID GetMenuItemNum(MenuItem * items){
 	}
 	return num;
 }
-
 
 /**
  * @brief 根据当前所选的动画方式，改变浮点数参数
@@ -360,9 +352,6 @@ void ChangeArea(OLED_ChangeArea *area)	{
 	ChangeFloatNum(&area->CurrentArea.Height,&area->TargetArea.Height,&area->Error.Height,&area->LastError.Height,&area->Integral.Height,&area->Derivative.Height);
 }
 
-
-
-
 /**
  * @brief 对当前的菜单页面的参数进行检查与初始化
  * @param 无
@@ -472,8 +461,6 @@ void OLED_UI_Init(MenuPage* Page){
 	CurrentMenuPageInit();
 	
 }
-
-
 
 /**
  * @brief 获取enter事件状态，用于判断是否正在执行回调函数
@@ -691,12 +678,6 @@ void OLED_DrawWindow(void){
 	
 }
 
-
-
-
-
-
-
 /**
  * @brief 将菜单整体向上移动一行
  * @param 无
@@ -737,8 +718,6 @@ void MenuItemsMoveRight(void){
 int16_t GetCurrentMenuPageMaxSlotNum(void){
 	return (int16_t)(CurrentMenuPage->List_MenuArea.Height - CurrentMenuPage->List_StartPointY+OLED_UI_LineStep.TargetDistance-1) / (OLED_UI_LineStep.TargetDistance + CurrentMenuPage->General_FontSize );
 }
-
-
 
 /**
  * @brief 设置目标光标区域
@@ -945,7 +924,6 @@ void PrintMenuElements(void){
 			LinePerfixWidth = ASCIIFont + LINEPERFIX_DISTANCE;
 		}
 
-
 		//打印菜单项
 		for(i = 0; i<num;i++){
 			int16_t StringLength;   /* 块内声明提升 */
@@ -972,7 +950,6 @@ void PrintMenuElements(void){
 				}else{
 					RadioBoxSymb = "□";
 				}
-
 
 				OLED_PrintfMixArea(//在限制的区域内打印文字
 							   //光标的起始x坐标加入行前缀宽度，这样可以自动留出打印行前缀的空间
@@ -1055,7 +1032,6 @@ void PrintMenuElements(void){
 					page->General_MenuItems[i]._LineSlip = (TempTargetArea.TargetArea.X + TempTargetArea.TargetArea.Width - 6) - CursorPoint.X - LinePerfixWidth;
 				}
 
-
 			}
 
 			OLED_PrintfMixArea(TempTargetArea.CurrentArea.X + LinePerfixWidth + CurrentMenuPage->List_StartPointX ,
@@ -1107,7 +1083,6 @@ void PrintMenuElements(void){
 		//绘制指示箭头Arrow
 		//OLED_ShowImageArea(page->Tiles_ScreenWidth/2 - 3,0,6,5,0,0,page->Tiles_ScreenWidth,page->Tiles_ScreenHeight,Arrow);
 
-
 		//记录此轮循环的字符串宽度
 		StringLength = CalcStringWidth(ChineseFont,ASCIIFont,page->General_MenuItems[page->_ActiveMenuID].General_item_text);
 		//如果字符串的宽度大于用户所设置的屏幕宽度
@@ -1149,8 +1124,6 @@ void PrintMenuElements(void){
 	}
 	
 }
-
-
 
 /**
  * @brief 按键与编码器记录函数
@@ -1276,7 +1249,6 @@ void ResetEnterFlag(void){
 	KeyEnterFlag = FLAGEND;
 }
 
-
 /**
  * @brief 将FadeOutFlag置FLAGSTART，用于标记渐隐效果正在执行
  * @param 无
@@ -1399,9 +1371,6 @@ void OLED_UI_CreateWindow(MenuWindow* window){
 	CurrentWindow = window;
 	
 }
-
-
-
 
 /**
  * @brief 运行渐隐效果
@@ -1583,7 +1552,6 @@ void MoveMenuElements(void){
 	//设置目标滚动条高度
 	SetTargetScrollBarHeight();
 
-
 	// 改变菜单起始元素的坐标
 	ChangePoint(&OLED_UI_PageStartPoint);
 	// 改变菜单项的行间距
@@ -1606,16 +1574,11 @@ void MoveMenuElements(void){
 	//设置颜色模式
 	OLED_SetColorMode(ColorMode);
 
-	/* 防御：亮度值异常（内存偶发破坏）时拉回合法范围——防 16000+ 写入 0x81 与显示 */
-	if(OLED_UI_Brightness < 0 || OLED_UI_Brightness > 100) OLED_UI_Brightness = 100;
-	OLED_Brightness(OLED_UI_Brightness);
-
 	ChangeDistance(&OLED_UI_ProbWidth);
 	// 改变窗口参数
 	ChangeArea(&OLED_UI_Window);
 	// 绘制窗口
 	OLED_DrawWindow();
-
 
 	
 	
@@ -1700,9 +1663,6 @@ OLED_UI_ShowFPS();
 	OLED_Update();
 }
 
-
-
-
 /**
  * @brief  OLED_UI的中断函数，内部包含需在中断内处理的任务
  * @param  无
@@ -1720,7 +1680,6 @@ void OLED_UI_InterruptHandler(void){
 		//获取_ActiveMenuID的变化值，_ActiveMenuID的值不变，并记录了按键的变化
 		MenuID_Type IncreaseID;   /* C51: 声明与赋值分离（C248）*/
 		IncreaseID = OLED_KeyAndEncoderRecord();
-
 
 		//如果窗口停留的标志位为true，说明当前正在运行窗口
 		if(OLED_SustainCounter.SustainFlag == true){
@@ -1832,5 +1791,3 @@ void OLED_UI_InterruptHandler(void){
 	}
 }
 #endif
-
-

@@ -24,6 +24,5 @@ void OLED_ShadowClear(void);                    /* 清影子缓冲（供 OLED_Cl
 void OLED_Update(void);                              /* 全屏刷新（diff 只发变化页） */
 void OLED_UpdateArea(uint8_t X, uint8_t Y, uint8_t Width, uint8_t Height); /* 局部刷新 */
 void OLED_SetColorMode(bool colormode);              /* 1=反色(0xA7) 0=正常(0xA6)；虚拟端无操作 */
-void OLED_Brightness(int16_t Brightness);            /* 0~255；实体 0x81 对比度，虚拟 SetContrast */
 
 #endif

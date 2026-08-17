@@ -1,7 +1,7 @@
 /*==============================================================================
  * OLED_UI_MenuData.c —— 本项目菜单数据（C51 位置初始化，GBK 编码）
  * 磁贴主屏：设置 / 关于 / 测温 / 串口 / 计算器 / 游戏
- * 设置页：亮度（窗口）/ 深浅色 / 帧率 / 语言占位 / 提示音占位 / 返回
+ * 设置页：深浅色 / 帧率 / 语言占位 / 提示音占位 / 返回
  * 关于页：项目信息
  * 注：中文按 GB2312 查字库，本文件必须保持 GBK 编码
  *============================================================================*/
@@ -11,27 +11,12 @@
 extern bool ColorMode;
 extern bool OLED_UI_FpsShow;
 extern bool SoundEnable;
-extern int16_t OLED_UI_Brightness;
 
 #define SPEED 8
 
 /* ================= 辅助函数（框架回调，暂为空） ================= */
 static void MainAuxFunc(void){}
 static void SettingAuxFunc(void){}
-
-/* ================= 亮度调节窗口 ================= */
-MenuWindow SetBrightnessWindow = {
-    80, 28, 4.0, WINDOW_ROUNDRECTANGLE,     /* 宽/高/持续时间/类型 */
-    "屏幕亮度", OLED_UI_FONT_12, 4, 3,      /* 标题/字号/边距 */
-    NULL, &OLED_UI_Brightness,              /* 结构顺序 (Float, Int)：Float=NULL → int 路径 */              /* 数据指针（float/int 二选一） */
-    10.0, 0.0, 100.0,                        /* 步长/最小/最大 */  /* 步进/最小/最大：0~100，0 熄灭，步进 10（用户定案） */
-    3, 4, 8,                                /* 底部间距/边距/进度条高度 */
-    0                                       /* _LineSlip */
-};
-
-void BrightnessWindow(void){
-    OLED_UI_CreateWindow(&SetBrightnessWindow);
-}
 
 /* ================= 磁贴主屏菜单项 ================= */
 MenuItem MainMenuItems[] = {
@@ -46,7 +31,6 @@ MenuItem MainMenuItems[] = {
 
 /* ================= 设置页 ================= */
 MenuItem SettingsMenuItems[] = {
-    {"亮度",   BrightnessWindow,  NULL, NULL, &OLED_UI_Brightness, NULL, NULL, NULL, 0, 0},
     {"深浅色", NULL,              NULL, &ColorMode,         NULL, NULL, NULL, NULL, 0, 0},
     {"显示帧率", NULL,            NULL, &OLED_UI_FpsShow,   NULL, NULL, NULL, NULL, 0, 0},
     {"语言",   NULL,              NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
