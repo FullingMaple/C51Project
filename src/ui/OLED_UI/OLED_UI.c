@@ -78,7 +78,7 @@ void GetFPS(void){
  * @return 无
  */
 void OLED_UI_ShowFPS(void){
-    OLED_FPS.count ++;
+	/* 注意：OLED_FPS.count++ 由主循环重绘路径执行（跳过帧不计入，保持渲染帧率语义） */
 	if (OLED_UI_FpsShow){
 		/* 手写 %3d：C51 的 vsprintf 每帧调用太慢（帧率优化 Step1） */
 		char buf[4];
@@ -1687,7 +1687,8 @@ void OLED_UI_MainLoop(void){
 	RunFadeOut();
 
 	//显示FPS
-	OLED_UI_ShowFPS();
+		OLED_FPS.count++;
+OLED_UI_ShowFPS();
 	//刷屏
 	OLED_Update();
 }
