@@ -1625,6 +1625,15 @@ void MoveMenuElements(void){
 static bool OLED_UI_IsStaticIdle(void)
 {
     float dx, dy;
+    static MenuID LastActiveID = 0xFF;      /* 上次记录的选择框索引 */
+    MenuID cur = CurrentMenuPage->_ActiveMenuID;
+
+    /* 选择框移动过（_ActiveMenuID 是整数索引非动画）→ 必须重绘一帧显示新高亮 */
+    if(cur != LastActiveID)
+    {
+        LastActiveID = cur;
+        return false;
+    }
 
     if(FadeOutFlag != FLAGEND) return false;        /* 渐隐动画中 */
     if(KeyEnterFlag != FLAGEND) return false;       /* 进入事件处理中 */
