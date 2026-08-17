@@ -370,23 +370,19 @@ void OLED_SetColorMode(bool colormode)
 /* 亮度 0~255；实体 0x81 对比度寄存器，虚拟 OLED12864_SetContrast */
 void OLED_Brightness(int16_t Brightness)
 {
-    /* 用户定案：范围 0~100，0 = 熄灭（0xAE），100 = 最亮（对比度 255）
-     * 无去重（每帧写 0xAF/0x81 无害；static 去重曾导致进入卡死——勿恢复！） */
+    /* 用户定案：范围 0~100，0 = 最暗但隐约可见，100 = 最亮（对比度 255）
+     * 映射：contrast = 20 + value × 235/100（0→20 可见暗，100→255 最亮）
+     * 无去重（每帧写无害；static 去重曾导致进入卡死——勿恢复！） */
+    uint16_t contrast;
     if(Brightness < 0)   Brightness = 0;
     if(Brightness > 100) Brightness = 100;
 
+    contrast = 20 + (uint16_t)Brightness * 235 / 100;
+
 #if(VIRTUAL_OLED)
-    OLED12864_SetContrast((uint8_t)((uint16_t)Brightness * 255 / 100));
+    OLED12864_SetContrast((uint8_t)contrast);
 #else
-    if(Brightness == 0)
-    {
-        OLED_Write_Command(0xAE);   /* 熄灭 */
-    }
-    else
-    {
-        OLED_Write_Command(0xAF);   /* 打开 */
-        OLED_Write_Command(0x81);
-        OLED_Write_Command((uint8_t)((uint16_t)Brightness * 255 / 100));
-    }
+    OLED_Write_Command(0x81);
+    OLED_Write_Command((uint8_t)contrast);
 #endif
 }
