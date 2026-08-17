@@ -24,7 +24,7 @@ MenuWindow SetBrightnessWindow = {
     80, 28, 4.0, WINDOW_ROUNDRECTANGLE,     /* 宽/高/持续时间/类型 */
     "屏幕亮度", OLED_UI_FONT_12, 4, 3,      /* 标题/字号/边距 */
     NULL, &OLED_UI_Brightness,              /* 数据指针（float/int 二选一） */
-    5.0, 5.0, 255.0,                        /* 步长/最小/最大 */
+    10.0, 0.0, 100.0,                        /* 步长/最小/最大 */  /* 步进/最小/最大：0~100，0 熄灭，步进 10（用户定案） */
     3, 4, 8,                                /* 底部间距/边距/进度条高度 */
     0                                       /* _LineSlip */
 };
