@@ -23,7 +23,7 @@ static void SettingAuxFunc(void){}
 MenuWindow SetBrightnessWindow = {
     80, 28, 4.0, WINDOW_ROUNDRECTANGLE,     /* 宽/高/持续时间/类型 */
     "屏幕亮度", OLED_UI_FONT_12, 4, 3,      /* 标题/字号/边距 */
-    &OLED_UI_Brightness, NULL,   /* int 路径：float 写 int16_t 会越界 2 字节（曾致亮度值 16000+ 卡死） */              /* 数据指针（float/int 二选一） */
+    NULL, &OLED_UI_Brightness,              /* 结构顺序 (Float, Int)：Float=NULL → int 路径 */              /* 数据指针（float/int 二选一） */
     10.0, 0.0, 100.0,                        /* 步长/最小/最大 */  /* 步进/最小/最大：0~100，0 熄灭，步进 10（用户定案） */
     3, 4, 8,                                /* 底部间距/边距/进度条高度 */
     0                                       /* _LineSlip */
