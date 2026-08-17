@@ -1672,19 +1672,7 @@ void OLED_UI_MainLoop(void){
 		OLED_Update();
 		return;
 	}
-	/* 动画/窗口期间限帧 100fps：内容更新与面板刷新（~100Hz）同频，防撕裂频闪 */
-	{
-		static uint32_t LastDrawTick;
-		uint32_t now = GetTick();
-		if((uint32_t)(now - LastDrawTick) < 10)
-		{
-			OLED_UI_ShowFPS();
-			OLED_Update();
-			return;
-		}
-		LastDrawTick = now;
-	}
-OLED_Clear();
+	OLED_Clear();
 
 	
 
