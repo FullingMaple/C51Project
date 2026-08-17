@@ -27,7 +27,11 @@ OLED_Key OLED_UI_Key = {1,1,1,1};   								//ÓÃÓÚ´æ´¢°´¼ü×´Ì¬µÄ½á¹¹Ìå,Ä¬ÈÏÃ»ÓĞ°
 OLED_Key OLED_UI_LastKey = {1,1,1,1};								//ÓÃÓÚ´æ´¢ÉÏÒ»ÂÖ°´¼ü×´Ì¬µÄ½á¹¹Ìå,Ä¬ÈÏÃ»ÓĞ°´ÏÂ£¬¶¼Îª1
 MenuPage*  CurrentMenuPage = NULL;									//È«¾Ö½á¹¹ÌåÖ¸Õë£¬µ±Ç°Ò³ÃæµÄÖ¸Õë
 MenuWindow *CurrentWindow = NULL;									//È«¾Ö½á¹¹ÌåÖ¸Õë£¬µ±Ç°´°¿ÚµÄÖ¸Õë
-MutexFlag KeyEnterFlag = FLAGEND;									//È«¾Öenter°´¼üµÄ»¥³âËø£¬»¥³âËøÎªFLAGSTARTÊ±±íÊ¾ÕıÔÚÖ´ĞĞ»Øµ÷º¯Êı
+MutexFlag KeyEnterFlag = FLAGEND;
+/* Õï¶Ï£ºÁÁ¶È´°¿Úµ÷½Ú¶¨Î»£¨16000+ bug£© */
+int16_t Diag_Unsafe = 0;
+float   Diag_Step = 0;
+int16_t Diag_ValBefore = 0;									//È«¾Öenter°´¼üµÄ»¥³âËø£¬»¥³âËøÎªFLAGSTARTÊ±±íÊ¾ÕıÔÚÖ´ĞĞ»Øµ÷º¯Êı
 MutexFlag FadeOutFlag = FLAGEND;									//½¥ÒşĞ§¹ûµÄ»¥³âËø£¬»¥³âËøÎªFLAGSTARTÊ±±íÊ¾ÕıÔÚÖ´ĞĞ½¥ÒşĞ§¹û
 bool ColorMode = DARKMODE;											//È«¾Ö²¼¶ûĞÍÊı¾İ£¬´æ´¢µ±Ç°ÏÔÊ¾Ä£Ê½£¬trueÎªÉîÉ«Ä£Ê½£¬falseÎªÇ³É«Ä£Ê½
 bool OLED_UI_FpsShow = true;										//È«¾Ö²¼¶ûĞÍÊı¾İ£¬ÓÃÓÚ¿ØÖÆÊÇ·ñÏÔÊ¾Ö¡ÂÊ
@@ -1604,6 +1608,8 @@ void MoveMenuElements(void){
 	//ÉèÖÃÑÕÉ«Ä£Ê½
 	OLED_SetColorMode(ColorMode);
 
+	/* ·ÀÓù£ºÁÁ¶ÈÖµÒì³££¨ÄÚ´æÅ¼·¢ÆÆ»µ£©Ê±À­»ØºÏ·¨·¶Î§¡ª¡ª·À 16000+ Ğ´Èë 0x81 ÓëÏÔÊ¾ */
+	if(OLED_UI_Brightness < 0 || OLED_UI_Brightness > 100) OLED_UI_Brightness = 100;
 	OLED_Brightness(OLED_UI_Brightness);
 
 	ChangeDistance(&OLED_UI_ProbWidth);
@@ -1691,6 +1697,8 @@ void OLED_UI_MainLoop(void){
 
 	//ÏÔÊ¾FPS
 		OLED_FPS.count++;
+	/* Õï¶Ï£ºÁÁ¶Èµ÷½Ú¶¨Î»£¨U=Unsafe S=Step B=µ÷½ÚÇ°Öµ£© */
+	OLED_Printf(0, 56, OLED_6X8_HALF, "U%d S%d B%d", (int)Diag_Unsafe, (int)Diag_Step, (int)Diag_ValBefore);
 OLED_UI_ShowFPS();
 	//Ë¢ÆÁ
 	OLED_Update();
@@ -1730,6 +1738,9 @@ void OLED_UI_InterruptHandler(void){
 		DataStyle = GetWindowDataStyle(CurrentWindow->Prob_Data_Int,CurrentWindow->Prob_Data_Float);
 			if(DataStyle != WINDOW_DATA_STYLE_NONE){
 				if(DataStyle == WINDOW_DATA_STYLE_INT){
+					Diag_Unsafe = IncreaseID.Unsafe;                    /* Õï¶Ï */
+					Diag_Step = CurrentWindow->Prob_DataStep;           /* Õï¶Ï */
+					Diag_ValBefore = *CurrentWindow->Prob_Data_Int;     /* Õï¶Ï */
 					*CurrentWindow->Prob_Data_Int += (IncreaseID.Unsafe * CurrentWindow->Prob_DataStep);
 					if(*CurrentWindow->Prob_Data_Int < CurrentWindow->Prob_MinData) {*CurrentWindow->Prob_Data_Int = CurrentWindow->Prob_MinData;}
 					if(*CurrentWindow->Prob_Data_Int > CurrentWindow->Prob_MaxData) {*CurrentWindow->Prob_Data_Int = CurrentWindow->Prob_MaxData;}
