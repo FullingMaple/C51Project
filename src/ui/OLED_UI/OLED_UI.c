@@ -66,7 +66,10 @@ void GetFPS(void){
 		OLED_FPS.step++;
 	}else{
 		OLED_FPS.step=0;
-		OLED_FPS.value = OLED_FPS.count;
+		/* 静态（跳过重绘）时 count==0：保留上次渲染帧率，避免显示 0 */
+		if(OLED_FPS.count != 0){
+			OLED_FPS.value = OLED_FPS.count;
+		}
 		OLED_FPS.count=0;
 	}
 }
