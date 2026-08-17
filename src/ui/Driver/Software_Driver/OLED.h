@@ -35,6 +35,7 @@ extern "C" {
 
 /**关于字符串最大长度的宏，用于格式化输出字符串*/
 #define  MAX_STRING_LENGTH          128
+extern char xdata OLED_StrBuf[MAX_STRING_LENGTH];   /* 共享 printf 缓冲（xdata，防栈溢出） */
 
 
 //清空屏幕

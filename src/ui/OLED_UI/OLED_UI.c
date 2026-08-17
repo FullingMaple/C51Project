@@ -1,4 +1,5 @@
 #include "OLED_UI.h"
+#include "OLED.h"
 #include "OLED_UI_Launcher.h"
 #include "c51lib.h"
 #include <stdarg.h>
@@ -509,7 +510,7 @@ bool GetFadeoutFlag(void){
  */
 int16_t CalcStringWidth(int16_t ChineseFont, int16_t ASCIIFont, const char *format, ...) {
     int16_t StringLength = 0;
-    char String[MAX_STRING_LENGTH];
+    char *String = OLED_StrBuf;   /* 共享 xdata 缓冲（防栈溢出） */
     char *ptr;   /* 块内声明提升 */
 
     va_list args;
