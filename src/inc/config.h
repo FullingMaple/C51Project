@@ -23,7 +23,7 @@
  *                  实验箱出厂 R173/R174 焊好，7 孔座直插，无需改焊）
  * OLED_IF_SPI = 0 → 硬件 I2C（SCL=P2.5 SDA=P2.4，需焊 R175/R176 或飞线）
  */
-#define OLED_IF_SPI     0
+#define OLED_IF_SPI     1
 
 /* ================= SSD1306/SSD1315 OLED ================= */
 #define OLED_ADDR   0x78        /* I2C 模式：0x3C<<1；模块焊盘在 0x7A 侧则改 0x7A */

@@ -76,7 +76,7 @@ static void I2C_Wait(void)
             else
             {
                 I2CCFG = 0x00;      /* 复位 I2C 模块 */
-                I2CCFG = 0xD4;  /* 临时诊断：273kHz */
+                I2CCFG = 0xCD;
                 I2CMSST = 0x00;
             }
             return;
@@ -227,7 +227,7 @@ void OLED_Init(void)
 #else
     /* I2C：硬件 I2C（需 R175/R176 或飞线） */
     P_SW2 |= 0x10;              /* I2C 功能脚选择 P2.5/P2.4 */
-    I2CCFG = 0xD4;  /* 临时诊断：273kHz */              /* 24MHz @400kHz：MSSPEED=13（FOSC/2/(13*2+4)=400k）
+    I2CCFG = 0xCD;              /* 24MHz @400kHz：MSSPEED=13（FOSC/2/(13*2+4)=400k）
      * 再次尝试 400kHz（整页 diff + 总线恢复兜底）；不行回 273kHz(0xD4) */
     I2CMSST = 0x00;
 #endif
