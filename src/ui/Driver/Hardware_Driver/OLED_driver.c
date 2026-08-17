@@ -44,10 +44,14 @@ static void OLED_SPI_Init(void)
     SPSTAT = SPIF + WCOL;                       /* 清标志 */
 }
 
-static void OLED_SPI_Send(uint8_t dat)          /* 单字节发送（等 SPIF） */
+static void OLED_SPI_Send(uint8_t dat)          /* 单字节发送（等 SPIF，超时保护防卡死） */
 {
+    uint16_t timeout = 0;
     SPDAT = dat;
-    while((SPSTAT & SPIF) == 0);
+    while((SPSTAT & SPIF) == 0)
+    {
+        if(++timeout > 5000) break;     /* ~1ms 超时：SPI 硬件异常时避免无限等待卡死 */
+    }
     SPSTAT = SPIF + WCOL;
 }
 #endif
@@ -366,8 +370,11 @@ void OLED_SetColorMode(bool colormode)
 /* 亮度 0~255；实体 0x81 对比度寄存器，虚拟 OLED12864_SetContrast */
 void OLED_Brightness(int16_t Brightness)
 {
+    static int16_t LastBrightness = -1;    /* 值变化才写：MoveMenuElements 每帧调用，避免高频 SPI 写 */
     if(Brightness < 0)   Brightness = 0;
     if(Brightness > 255) Brightness = 255;
+    if(Brightness == LastBrightness) return;
+    LastBrightness = Brightness;
 
 #if(VIRTUAL_OLED)
     OLED12864_SetContrast((uint8_t)Brightness);

@@ -1639,6 +1639,14 @@ static bool OLED_UI_IsStaticIdle(void)
     if(KeyEnterFlag != FLAGEND) return false;       /* 进入事件处理中 */
     if(CurrentWindow != NULL) return false;         /* 窗口组件打开（进度条动画） */
 
+    /* 光标/选择框动画是否到位（光标框位置是 ChangeArea 动画，漏查会导致按键只动一帧） */
+    dx = OLED_UI_Cursor.CurrentArea.X - OLED_UI_Cursor.TargetArea.X;
+    dy = OLED_UI_Cursor.CurrentArea.Y - OLED_UI_Cursor.TargetArea.Y;
+    if(fabs(dx) > 0.5f || fabs(dy) > 0.5f) return false;
+    dx = OLED_UI_Cursor.CurrentArea.Width  - OLED_UI_Cursor.TargetArea.Width;
+    dy = OLED_UI_Cursor.CurrentArea.Height - OLED_UI_Cursor.TargetArea.Height;
+    if(fabs(dx) > 0.5f || fabs(dy) > 0.5f) return false;
+
     /* 菜单框动画是否到位（fabs < 0.5px 视为到位，与插值收敛阈值同量级） */
     dx = OLED_UI_MenuFrame.CurrentArea.X - OLED_UI_MenuFrame.TargetArea.X;
     dy = OLED_UI_MenuFrame.CurrentArea.Y - OLED_UI_MenuFrame.TargetArea.Y;
