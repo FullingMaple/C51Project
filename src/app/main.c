@@ -16,6 +16,13 @@ char *USER_STCISPCMD = "@STCISP#";
 
 void System_Init(void)
 {
+    /* 关键修复：标准 STARTUP.A51 默认不清 xdata（XDATALEN=0）——xdata 全局上电随机，
+     * 导致行为漂移（遥控失效/空白/卡死随机出现）。显式清零全部 xdata（8KB） */
+    {
+        uint16_t _i;
+        uint8_t xdata * _p = (uint8_t xdata *)0x0000;
+        for(_i = 0; _i < 0x2000; _i++) *_p++ = 0;
+    }
     /* 注意：不要手动改 SP！C51 运行库 ?C_C51STARTUP 已设 SP=0x22（栈 221B），
      * 手动设 0x80 会把栈砍到 128B，深调用链+中断嵌套+printf 浮点易溢出跑飞 */
     P_SW2 |= 0x80;              /* 扩展寄存器(XFR)访问使能 */
