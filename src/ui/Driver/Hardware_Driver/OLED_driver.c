@@ -370,11 +370,8 @@ void OLED_SetColorMode(bool colormode)
 /* 亮度 0~255；实体 0x81 对比度寄存器，虚拟 OLED12864_SetContrast */
 void OLED_Brightness(int16_t Brightness)
 {
-    static int16_t LastBrightness = -1;    /* 值变化才写：MoveMenuElements 每帧调用，避免高频 SPI 写 */
     if(Brightness < 0)   Brightness = 0;
     if(Brightness > 255) Brightness = 255;
-    if(Brightness == LastBrightness) return;
-    LastBrightness = Brightness;
 
 #if(VIRTUAL_OLED)
     OLED12864_SetContrast((uint8_t)Brightness);
