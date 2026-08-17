@@ -510,7 +510,7 @@ bool GetFadeoutFlag(void){
  */
 int16_t CalcStringWidth(int16_t ChineseFont, int16_t ASCIIFont, const char *format, ...) {
     int16_t StringLength = 0;
-    char *String = OLED_StrBuf;   /* 共享 xdata 缓冲（防栈溢出） */
+        char String[MAX_STRING_LENGTH];   /* 独立栈缓冲：CalcStringWidth 调用链浅（128B 可承受），不与共享缓冲冲突 */   /* 共享 xdata 缓冲（防栈溢出） */
     char *ptr;   /* 块内声明提升 */
 
     va_list args;
