@@ -1,4 +1,5 @@
 #include "OLED_UI.h"
+#include "OLED.h"
 #include "OLED_UI_Launcher.h"
 #include "c51lib.h"
 #include <stdarg.h>
@@ -29,9 +30,6 @@ MenuPage*  CurrentMenuPage = NULL;									//全局结构体指针，当前页面的指针
 MenuWindow *CurrentWindow = NULL;									//全局结构体指针，当前窗口的指针
 MutexFlag KeyEnterFlag = FLAGEND;
 /* 诊断：亮度窗口调节定位（16000+ bug） */
-int16_t Diag_Unsafe = 0;
-float   Diag_Step = 0;
-int16_t Diag_ValBefore = 0;									//全局enter按键的互斥锁，互斥锁为FLAGSTART时表示正在执行回调函数
 MutexFlag FadeOutFlag = FLAGEND;									//渐隐效果的互斥锁，互斥锁为FLAGSTART时表示正在执行渐隐效果
 bool ColorMode = DARKMODE;											//全局布尔型数据，存储当前显示模式，true为深色模式，false为浅色模式
 bool OLED_UI_FpsShow = true;										//全局布尔型数据，用于控制是否显示帧率
@@ -512,7 +510,7 @@ bool GetFadeoutFlag(void){
  */
 int16_t CalcStringWidth(int16_t ChineseFont, int16_t ASCIIFont, const char *format, ...) {
     int16_t StringLength = 0;
-    char String[MAX_STRING_LENGTH];
+    char *String = OLED_StrBuf;   /* 共享 xdata 缓冲（防栈溢出） */
     char *ptr;   /* 块内声明提升 */
 
     va_list args;
@@ -1697,8 +1695,6 @@ void OLED_UI_MainLoop(void){
 
 	//显示FPS
 		OLED_FPS.count++;
-	/* 诊断：亮度调节定位（U=Unsafe S=Step B=调节前值） */
-	OLED_Printf(0, 56, OLED_6X8_HALF, "U%d S%d B%d", (int)Diag_Unsafe, (int)Diag_Step, (int)Diag_ValBefore);
 OLED_UI_ShowFPS();
 	//刷屏
 	OLED_Update();
@@ -1738,9 +1734,6 @@ void OLED_UI_InterruptHandler(void){
 		DataStyle = GetWindowDataStyle(CurrentWindow->Prob_Data_Int,CurrentWindow->Prob_Data_Float);
 			if(DataStyle != WINDOW_DATA_STYLE_NONE){
 				if(DataStyle == WINDOW_DATA_STYLE_INT){
-					Diag_Unsafe = IncreaseID.Unsafe;                    /* 诊断 */
-					Diag_Step = CurrentWindow->Prob_DataStep;           /* 诊断 */
-					Diag_ValBefore = *CurrentWindow->Prob_Data_Int;     /* 诊断 */
 					*CurrentWindow->Prob_Data_Int += (IncreaseID.Unsafe * CurrentWindow->Prob_DataStep);
 					if(*CurrentWindow->Prob_Data_Int < CurrentWindow->Prob_MinData) {*CurrentWindow->Prob_Data_Int = CurrentWindow->Prob_MinData;}
 					if(*CurrentWindow->Prob_Data_Int > CurrentWindow->Prob_MaxData) {*CurrentWindow->Prob_Data_Int = CurrentWindow->Prob_MaxData;}

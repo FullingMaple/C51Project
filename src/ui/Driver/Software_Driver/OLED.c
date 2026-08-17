@@ -627,7 +627,7 @@ void OLED_ShowChinese(int16_t X, int16_t Y, char *Chinese, uint8_t FontSize)
   */
 void OLED_Printf(int16_t X, int16_t Y, uint8_t FontSize, char *format, ...)
 {
-	char String[MAX_STRING_LENGTH];						//定义字符数组
+	char *String = OLED_StrBuf;						//定义字符数组
 	va_list arg;							//定义可变参数列表数据类型的变量arg
 	va_start(arg, format);					//从format开始，接收参数列表到arg变量
 	vsprintf(String, format, arg);			//使用vsprintf打印格式化字符串和参数列表到字符数组中
@@ -682,7 +682,7 @@ void OLED_ShowMixString(int16_t X, int16_t Y, char *String, uint8_t ChineseFontS
 
 void OLED_PrintfMix(int16_t X, int16_t Y, uint8_t ChineseFontSize,uint8_t ASCIIFontSize,const char *format, ...)
 {
-	char String[MAX_STRING_LENGTH];						//定义字符数组
+	char *String = OLED_StrBuf;						//定义字符数组
 	va_list arg;							//定义可变参数列表数据类型的变量arg
 	va_start(arg, format);					//从format开始，接收参数列表到arg变量
 	vsprintf(String, format, arg);			//使用vsprintf打印格式化字符串和参数列表到字符数组中
@@ -887,7 +887,7 @@ void OLED_ShowChineseArea(int16_t RangeX,int16_t RangeY,int16_t RangeWidth,int16
 void OLED_PrintfArea(int16_t RangeX,int16_t RangeY,int16_t RangeWidth,int16_t RangeHeight, int16_t X, int16_t Y,uint8_t FontSize, char *format, ...)
 {
 	//由于有可能显示极长的字符串，所以128
-	char String[MAX_STRING_LENGTH];						//定义字符数组
+	char *String = OLED_StrBuf;						//定义字符数组
 	va_list arg;							//定义可变参数列表数据类型的变量arg
 	va_start(arg, format);					//从format开始，接收参数列表到arg变量
 	vsprintf(String, format, arg);			//使用vsprintf打印格式化字符串和参数列表到字符数组中
@@ -949,7 +949,7 @@ void OLED_ShowMixStringArea(int16_t RangeX, int16_t RangeY, int16_t RangeWidth, 
 void OLED_PrintfMixArea(int16_t RangeX,int16_t RangeY,int16_t RangeWidth,int16_t RangeHeight,int16_t X, int16_t Y, uint8_t ChineseFontSize,uint8_t ASCIIFontSize, char *format, ...)
 {
 	//由于有可能显示极长的字符串，所以128
-	char String[MAX_STRING_LENGTH];						//定义字符数组
+	char *String = OLED_StrBuf;						//定义字符数组
 	va_list arg;							//定义可变参数列表数据类型的变量arg
 	va_start(arg, format);					//从format开始，接收参数列表到arg变量
 	vsprintf(String, format, arg);			//使用vsprintf打印格式化字符串和参数列表到字符数组中
@@ -964,6 +964,10 @@ void OLED_PrintfMixArea(int16_t RangeX,int16_t RangeY,int16_t RangeWidth,int16_t
   * 返 回 值：无
   * 说    明：调用此函数后，要想真正地呈现在屏幕上，还需调用更新函数
   */
+/* 共享 printf 缓冲（xdata）：原各函数 char String[128] 在栈上（深调用链易栈溢出
+ * 写坏 data 段 → 进入设置页卡死；移到 xdata 后栈需求大降） */
+char xdata OLED_StrBuf[MAX_STRING_LENGTH];
+
 void OLED_DrawPoint(int16_t X, int16_t Y)
 {
 	/*参数检查，保证指定位置不会超出屏幕范围*/
