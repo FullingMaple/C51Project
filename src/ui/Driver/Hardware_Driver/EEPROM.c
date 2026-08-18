@@ -10,6 +10,13 @@
 
 #define IAP_EN          (1 << 7)    /* IAP_CONTR 使能位 */
 
+/* EEPROM 区基址（IAP 绝对地址）：
+ * STC8H 的 IAP 地址 = 程序空间绝对地址（非 EEPROM 区偏移）！
+ * 出厂 EEPROM 0.5K 位于 flash 末尾：0x10000 - 0x200 = 0xFE00
+ * 注意：用 0x0000 会擦/写程序区（中断向量表所在）→ 程序被毁卡死+蜂鸣长鸣
+ * 若 ISP 下载时将 EEPROM 大小改为 N K，基址 = 0x10000 - N*1024 */
+#define EEPROM_BASE     0xFE00
+
 static void IAP_Enable(void)
 {
     EA = 0;   /* IAP 操作期间必须关总中断：0x5A/0xA5 触发序列被中断插入会导致触发失败 */
@@ -39,8 +46,8 @@ uint8_t EEPROM_ReadByte(uint16_t addr)
 
     IAP_Enable();
     IAP_CMD  = 1;                       /* 读命令 */
-    IAP_ADDRH = (uint8_t)(addr >> 8);
-    IAP_ADDRL = (uint8_t)addr;
+    IAP_ADDRH = (uint8_t)((EEPROM_BASE + addr) >> 8);
+    IAP_ADDRL = (uint8_t)(EEPROM_BASE + addr);
     IAP_Trigger();
     dat = IAP_DATA;
     IAP_Disable();
@@ -51,8 +58,8 @@ void EEPROM_WriteByte(uint16_t addr, uint8_t dat)
 {
     IAP_Enable();
     IAP_CMD    = 2;                     /* 写命令 */
-    IAP_ADDRH  = (uint8_t)(addr >> 8);
-    IAP_ADDRL  = (uint8_t)addr;
+    IAP_ADDRH  = (uint8_t)((EEPROM_BASE + addr) >> 8);
+    IAP_ADDRL  = (uint8_t)(EEPROM_BASE + addr);
     IAP_DATA   = dat;
     IAP_Trigger();
     IAP_Disable();
@@ -63,8 +70,8 @@ static void EEPROM_EraseSector(uint16_t addr)
 {
     IAP_Enable();
     IAP_CMD    = 3;                     /* 擦除命令 */
-    IAP_ADDRH  = (uint8_t)(addr >> 8);
-    IAP_ADDRL  = (uint8_t)addr;
+    IAP_ADDRH  = (uint8_t)((EEPROM_BASE + addr) >> 8);
+    IAP_ADDRL  = (uint8_t)(EEPROM_BASE + addr);
     IAP_Trigger();
     IAP_Disable();
 }
