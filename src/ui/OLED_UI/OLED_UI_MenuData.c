@@ -11,6 +11,7 @@
 #include "calendar.h"
 #include "EEPROM.h"
 #include "timeedit.h"
+#include "OLED_UI_Driver.h"   /* Buzzer_Beep / Delay_ms（保存失败提示） */
 
 extern bool ColorMode;
 extern bool OLED_UI_FpsShow;
@@ -68,11 +69,15 @@ static uint8_t  Ts_Field = 0;         /* 0=年 1=月 2=日 3=时 4=分 5=秒 */
 static uint8_t  Ts_Ready = 0;         /* 进入后首帧装载当前时间 */
 static uint8_t  Ts_LastKey = 0;       /* 键边沿去重 */
 
-/* 保存 RTC + EEPROM（断电恢复时间戳） */
+/* 保存 RTC + EEPROM（断电恢复时间戳；写后读回校验失败 → 三声提示） */
 static void TimeSet_Commit(void)
 {
+    uint8_t i;
+
     RTC_SetTime(&Ts_Edit);
-    EEPROM_SaveTime(&Ts_Edit);
+    if(EEPROM_SaveTime(&Ts_Edit) != 0){
+        for(i = 0; i < 3; i++){ Buzzer_Beep(); Delay_ms(150); }   /* 保存失败：三声（成功为单声） */
+    }
     Ts_Ready = 0;
 }
 

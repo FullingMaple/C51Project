@@ -17,7 +17,7 @@ uint8_t EEPROM_ReadByte(uint16_t addr);
 /* 写入字节（自动擦除所在扇区——512B 一扇区，写前需擦） */
 void EEPROM_WriteByte(uint16_t addr, uint8_t dat);
 
-/* 保存时间戳（magic + 时间）——返回 0 成功 */
+/* 保存时间戳（magic + 时间）——写后读回校验，返回 0 成功，1 失败（EEPROM 配置/地址异常） */
 uint8_t EEPROM_SaveTime(const RTC_Time *t);
 
 /* 读取时间戳——magic 有效返回 0 并填充 t；无效返回 1 */

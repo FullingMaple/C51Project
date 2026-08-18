@@ -78,15 +78,25 @@ static void EEPROM_EraseSector(uint16_t addr)
 
 uint8_t EEPROM_SaveTime(const RTC_Time *t)
 {
+    uint8_t buf[8];
+    uint8_t i;
+
+    buf[0] = 0x5A;                                   /* magic */
+    buf[1] = 0xA5;
+    buf[2] = (uint8_t)(t->year - 2000);
+    buf[3] = t->month;
+    buf[4] = t->day;
+    buf[5] = t->hour;
+    buf[6] = t->minute;
+    buf[7] = t->second;
+
     EEPROM_EraseSector(0);              /* 擦整个扇区（0.5K EEPROM 单扇区） */
-    EEPROM_WriteByte(0, 0x5A);          /* magic */
-    EEPROM_WriteByte(1, 0xA5);
-    EEPROM_WriteByte(2, (uint8_t)(t->year - 2000));
-    EEPROM_WriteByte(3, t->month);
-    EEPROM_WriteByte(4, t->day);
-    EEPROM_WriteByte(5, t->hour);
-    EEPROM_WriteByte(6, t->minute);
-    EEPROM_WriteByte(7, t->second);
+    for(i = 0; i < 8; i++) EEPROM_WriteByte(i, buf[i]);
+
+    /* 写后读回校验：全部一致才认为保存成功（诊断 EEPROM 配置/地址问题） */
+    for(i = 0; i < 8; i++){
+        if(EEPROM_ReadByte(i) != buf[i]) return 1;
+    }
     return 0;
 }
 
