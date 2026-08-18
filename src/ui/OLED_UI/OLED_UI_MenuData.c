@@ -14,6 +14,7 @@
 #include "OLED_UI_Driver.h"   /* Buzzer_Beep / Delay_ms（保存失败提示） */
 
 extern bool ColorMode;
+extern MenuPage *CurrentMenuPage;   /* 保存失败时屏蔽/恢复框架返回 */
 extern bool OLED_UI_FpsShow;
 extern bool SoundEnable;
 
@@ -68,8 +69,11 @@ static RTC_Time Ts_Edit;              /* 编辑缓冲 */
 static uint8_t  Ts_Field = 0;         /* 0=年 1=月 2=日 3=时 4=分 5=秒 */
 static uint8_t  Ts_Ready = 0;         /* 进入后首帧装载当前时间 */
 static uint8_t  Ts_LastKey = 0;       /* 键边沿去重 */
+static uint8_t  Ts_NeedExit = 0;      /* 保存失败：诊断展示后延迟退出 */
+static uint32_t Ts_ExitTick = 0;      /* 延迟退出时刻（GetTick 毫秒） */
 
-/* 保存 RTC + EEPROM（断电恢复时间戳；写后读回校验失败 → 三声提示） */
+/* 保存 RTC + EEPROM（断电恢复时间戳）
+ * 失败：三声提示 + 临时屏蔽框架返回（Parent=NULL）→ 停留显示诊断 3 秒 */
 static void TimeSet_Commit(void)
 {
     uint8_t i;
@@ -77,6 +81,11 @@ static void TimeSet_Commit(void)
     RTC_SetTime(&Ts_Edit);
     if(EEPROM_SaveTime(&Ts_Edit) != 0){
         for(i = 0; i < 3; i++){ Buzzer_Beep(); Delay_ms(150); }   /* 保存失败：三声（成功为单声） */
+        Ts_NeedExit = 1;
+        Ts_ExitTick = GetTick() + 3000;
+        CurrentMenuPage->General_ParentMenuPage = NULL;           /* 屏蔽框架 Back，留住诊断 */
+    }else{
+        Ts_NeedExit = 0;
     }
     Ts_Ready = 0;
 }
@@ -116,6 +125,18 @@ static void TimeSetAuxFunc(void)
         case 3: x = 36;  OLED_ReverseArea(x, 36, 14, 12); break;   /* 时 */
         case 4: x = 57;  OLED_ReverseArea(x, 36, 14, 12); break;   /* 分 */
         case 5: x = 78;  OLED_ReverseArea(x, 36, 14, 12); break;   /* 秒 */
+    }
+
+    /* 保存失败诊断：底部 6x8 显示 "EEP S1 B3 05>FF"（阶段/字节/期望>读回），3 秒后恢复退出 */
+    if(Ts_NeedExit){
+        OLED_Printf(0, 52, OLED_6X8_HALF, "EEP S%1d B%1d %02X>%02X",
+            (int)EEP_Diag_Stage, (int)EEP_Diag_Idx,
+            (int)EEP_Diag_Expect, (int)EEP_Diag_Got);
+        if((int32_t)(GetTick() - Ts_ExitTick) >= 0){
+            CurrentMenuPage->General_ParentMenuPage = &SettingsMenuPage;   /* 恢复返回 */
+            Ts_NeedExit = 0;
+            OLED_UI_Back();
+        }
     }
 }
 

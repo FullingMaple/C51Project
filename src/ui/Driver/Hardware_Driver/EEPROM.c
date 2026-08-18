@@ -77,10 +77,17 @@ static void EEPROM_EraseSector(uint16_t addr)
     IAP_Disable();
 }
 
+/* 诊断变量（保存失败时填充，UI 可显示定位）：
+ * Stage=1 擦除后读回非 FF；Stage=2 写入后读回不符；Idx/Expect/Got 为字节索引/期望/读回 */
+uint8_t EEP_Diag_Stage  = 0;
+uint8_t EEP_Diag_Idx    = 0;
+uint8_t EEP_Diag_Expect = 0;
+uint8_t EEP_Diag_Got    = 0;
+
 uint8_t EEPROM_SaveTime(const RTC_Time *t)
 {
     uint8_t buf[8];
-    uint8_t i;
+    uint8_t i, got;
 
     buf[0] = 0x5A;                                   /* magic */
     buf[1] = 0xA5;
@@ -91,12 +98,30 @@ uint8_t EEPROM_SaveTime(const RTC_Time *t)
     buf[6] = t->minute;
     buf[7] = t->second;
 
+    EEP_Diag_Stage = 0;
+
     EEPROM_EraseSector(0);              /* 擦整个扇区（0.5K EEPROM 单扇区） */
+
+    /* 诊断 1：擦除后读回应全 0xFF（区分擦除失败与写失败） */
+    for(i = 0; i < 8; i++){
+        got = EEPROM_ReadByte(i);
+        if(got != 0xFF){
+            EEP_Diag_Stage = 1; EEP_Diag_Idx = i;
+            EEP_Diag_Expect = 0xFF; EEP_Diag_Got = got;
+            return 1;
+        }
+    }
+
     for(i = 0; i < 8; i++) EEPROM_WriteByte(i, buf[i]);
 
-    /* 写后读回校验：全部一致才认为保存成功（诊断 EEPROM 配置/地址问题） */
+    /* 诊断 2：写后读回校验，全部一致才认为保存成功 */
     for(i = 0; i < 8; i++){
-        if(EEPROM_ReadByte(i) != buf[i]) return 1;
+        got = EEPROM_ReadByte(i);
+        if(got != buf[i]){
+            EEP_Diag_Stage = 2; EEP_Diag_Idx = i;
+            EEP_Diag_Expect = buf[i]; EEP_Diag_Got = got;
+            return 1;
+        }
     }
     return 0;
 }
