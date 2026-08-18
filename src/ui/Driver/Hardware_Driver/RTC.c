@@ -22,9 +22,11 @@ static uint8_t bcd2dec(uint8_t v)
 
 void RTC_Init(void)
 {
+    uint16_t i;
+
     /* 启动外部 32.768K 晶振（低增益 0x80，不稳可改 0xC0 高增益） */
     X32KCR = 0x80 + 0x40;
-    while(!(X32KCR & 0x01));          /* 等待晶振稳定 */
+    for(i = 0; i < 10000 && !(X32KCR & 0x01); i++);   /* 等待晶振稳定（超时保护防死等） */
     RTCCFG = 0x01;                    /* 选外部 32K 时钟源 + 触发寄存器初始化 */
     RTCCR  = 0x01;                    /* RTC 使能 */
     while(RTCCFG & 0x01);             /* 等待初始化完成（~30us） */

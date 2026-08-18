@@ -27,6 +27,7 @@ OLED_UI_Counter OLED_FPS = {0,0,0};									//用于存储帧率的结构体
 OLED_Key OLED_UI_Key = {1,1,1,1};   								//用于存储按键状态的结构体,默认没有按下，都为1
 OLED_Key OLED_UI_LastKey = {1,1,1,1};								//用于存储上一轮按键状态的结构体,默认没有按下，都为1
 extern MenuPage ClockMenuPage;   /* 万年历页（顶部时钟跳过用） */
+extern MenuPage TimeSetMenuPage;  /* 时间设置页（编辑状态机） */
 MenuPage*  CurrentMenuPage = NULL;									//全局结构体指针，当前页面的指针
 MenuWindow *CurrentWindow = NULL;									//全局结构体指针，当前窗口的指针
 MutexFlag KeyEnterFlag = FLAGEND;
@@ -100,12 +101,14 @@ void OLED_UI_ShowFPS(void){
 void OLED_UI_ShowClock(void)
 {
     RTC_Time t;
-    static uint8_t last_sec = 0xFF;   /* 异常初值：首帧必刷 */
+    static uint8_t last_h = 0xFF, last_m = 0xFF, last_s = 0xFF;   /* 异常初值：首帧必刷 */
 
     if(CurrentMenuPage == &ClockMenuPage) return;
     RTC_GetTime(&t);
-    if(t.second != last_sec){
-        last_sec = t.second;
+    if(t.hour != last_h || t.minute != last_m || t.second != last_s){   /* 完整时间比较：设置时间后同秒也刷新 */
+        last_h = t.hour;
+        last_m = t.minute;
+        last_s = t.second;
         OLED_Printf(0, 0, OLED_6X8_HALF, "%02d:%02d:%02d", t.hour, t.minute, t.second);
     }
 }
@@ -1624,6 +1627,9 @@ static bool OLED_UI_IsStaticIdle(void)
         return false;
     }
 
+    /* 实时页面（万年历时钟/时间设置编辑）恒重绘：静态跳过会导致时间/日期不刷新 */
+    if(CurrentMenuPage == &ClockMenuPage) return false;
+    if(CurrentMenuPage == &TimeSetMenuPage) return false;
     if(FadeOutFlag != FLAGEND) return false;        /* 渐隐动画中 */
     if(KeyEnterFlag != FLAGEND) return false;       /* 进入事件处理中 */
     if(CurrentWindow != NULL) return false;         /* 窗口组件打开（进度条动画） */
@@ -1741,11 +1747,13 @@ void OLED_UI_InterruptHandler(void){
 					if(CurrentMenuPage->_Slot > 0){
 						CurrentMenuPage->_Slot--;
 					}
-					CurrentMenuPage->_ActiveMenuID--;
+					if(CurrentMenuPage->_ActiveMenuID > 0)
+						CurrentMenuPage->_ActiveMenuID--;   /* 边界保护：0 项页面旁路菜单移动 */
 				}
 				//如果当前菜单类型是列表类
 				if(CurrentMenuPage->General_MenuType == MENU_TYPE_TILES){
-					CurrentMenuPage->_ActiveMenuID--;
+					if(CurrentMenuPage->_ActiveMenuID > 0)
+						CurrentMenuPage->_ActiveMenuID--;   /* 边界保护：0 项页面旁路菜单移动 */
 					MenuItemsMoveRight();
 				}
 			}
@@ -1763,11 +1771,13 @@ void OLED_UI_InterruptHandler(void){
 					if(CurrentMenuPage->_Slot < GetCurrentMenuPageMaxSlotNum()-1){
 						CurrentMenuPage->_Slot++;
 					}
-					CurrentMenuPage->_ActiveMenuID++;
+					if(CurrentMenuPage->_ActiveMenuID < GetMenuItemNum(CurrentMenuPage->General_MenuItems) - 1)
+						CurrentMenuPage->_ActiveMenuID++;   /* 边界保护：0 项页面旁路 */
 				}
 				//如果当前菜单类型是列表类
 				if(CurrentMenuPage->General_MenuType == MENU_TYPE_TILES){
-					CurrentMenuPage->_ActiveMenuID++;
+					if(CurrentMenuPage->_ActiveMenuID < GetMenuItemNum(CurrentMenuPage->General_MenuItems) - 1)
+						CurrentMenuPage->_ActiveMenuID++;   /* 边界保护：0 项页面旁路 */
 					MenuItemsMoveLeft();
 				}
 

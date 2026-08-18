@@ -142,7 +142,7 @@ static MenuItem ClockMenuItems[] = {
     {NULL}
 };
 
-static const char code *ClockWeekStr[7] = {"一","二","三","四","五","六","日"};
+static const char *ClockWeekStr[7] = {"一","二","三","四","五","六","日"};   /* 通用指针（C51 printf %s 需通用指针） */
 
 /* 每帧绘制：日期行 + 表头 + 日历格（今天反色） */
 static void ClockAuxFunc(void)
@@ -172,7 +172,7 @@ static void ClockAuxFunc(void)
         col = idx % 7;
         x = 22 + (int16_t)col * 12;
         y = 24 + (int16_t)row * 8;
-        if(row >= 5) { x = 100 + (int16_t)(i - 29) * 8; y = 56; }
+        if(row >= 5) { x = 106 + (int16_t)(i - 29) * 6; y = 56; }   /* 6 行月末行溢出：画第 5 行右侧（x=106 起，与 22-28 不重叠） */   /* 6 行月末行溢出：画表头行右侧（避免与第 5 行重叠） */
         OLED_ShowNum(x, y, i, (i >= 10) ? 2 : 1, OLED_6X8_HALF);
         if(i == t.day) OLED_ReverseArea(x, y, 8, 8);
     }
