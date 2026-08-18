@@ -17,6 +17,25 @@
 - **每次 AI 改完代码后，你都要：① 看它改了哪些文件（§5 监督清单）② 构建 ③ 虚拟屏看效果**
 - 不信任 AI 的"我觉得没问题"——一切以**构建通过 + 虚拟屏实测**为准
 
+### ⚠️ 分支铁律（开工第一步，最重要！）
+
+**你必须在自己的分支 `feature/ntc` 上开发**——你和另一位同学同时开发（他做计算器），各改各的分支，最后主开发统一合入：
+
+```bash
+# 开工第一步（只做一次）：创建并切换到你的分支
+git checkout -b feature/ntc
+
+# 每次提交前确认你在正确的分支上（应显示 * feature/ntc）
+git branch
+
+# 如果发现自己跑到了 dev 分支上——立刻切回来
+git checkout feature/ntc
+```
+
+- **绝不直接提交到 dev / main 分支！**（两位同学 + 主开发共用一个仓库，混在一起会互相踩）
+- 看到 `git branch` 输出 `* dev` 时**不要提交**——先 `git checkout feature/ntc`
+- AI 如果擅自 `git commit` 到别的分支——让它先切回 `feature/ntc`
+
 ### 使用这些 Skill（重要，主开发已配好）
 
 在 VSCode 对话里输入 `/skill名` 即可调用（你的 Claude 插件里已有）：
@@ -265,7 +284,7 @@ git push origin feature/ntc
 
 - 只提交上面 2 个源码文件（**不要提交 hex/其他文件**）
 - 提交信息格式：`feat: ...`（功能）/ `fix: ...`（修复）
-- 分支：`feature/ntc`（你的专属分支，别动 dev）
+- **分支：必须在 `feature/ntc` 上**（§0 分支铁律）——提交前 `git branch` 确认，不在就 `git checkout feature/ntc`
 
 ---
 
