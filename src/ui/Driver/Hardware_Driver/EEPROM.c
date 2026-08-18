@@ -1,14 +1,18 @@
 /*==============================================================================
  * EEPROM.c —— STC8H IAP 读写实现（官方 19 号例程移植）
  * 注意：写入前必须擦除整个扇区（STC8H 扇区 = 512B）
+ * 关键：IAP 触发后 CPU 硬件暂停直到操作完成，无需（也不应）查询忙标志——
+ *       忙标志等待在触发失败时会死等，故按官方例程：触发后 _nop_() 即关闭
  *============================================================================*/
 #include "config.h"     /* MAIN_Fosc */
+#include "intrins.h"    /* _nop_() */
 #include "EEPROM.h"
 
 #define IAP_EN          (1 << 7)    /* IAP_CONTR 使能位 */
 
 static void IAP_Enable(void)
 {
+    EA = 0;   /* IAP 操作期间必须关总中断：0x5A/0xA5 触发序列被中断插入会导致触发失败 */
     IAP_CONTR = IAP_EN | (MAIN_Fosc / 1000000);   /* TPS = 主频 MHz */
 }
 
@@ -19,12 +23,14 @@ static void IAP_Disable(void)
     IAP_TRIG  = 0;
     IAP_ADDRH = 0xFF;
     IAP_ADDRL = 0xFF;
+    EA = 1;   /* 恢复总中断 */
 }
 
 static void IAP_Trigger(void)
 {
     IAP_TRIG = 0x5A;
     IAP_TRIG = 0xA5;
+    _nop_();  /* 触发后硬件自动暂停直到操作完成（官方例程写法，无忙等待） */
 }
 
 uint8_t EEPROM_ReadByte(uint16_t addr)
@@ -49,7 +55,6 @@ void EEPROM_WriteByte(uint16_t addr, uint8_t dat)
     IAP_ADDRL  = (uint8_t)addr;
     IAP_DATA   = dat;
     IAP_Trigger();
-    while(!(IAP_CONTR & 0x01));         /* 等待忙标志清除 */
     IAP_Disable();
 }
 
@@ -61,7 +66,6 @@ static void EEPROM_EraseSector(uint16_t addr)
     IAP_ADDRH  = (uint8_t)(addr >> 8);
     IAP_ADDRL  = (uint8_t)addr;
     IAP_Trigger();
-    while(!(IAP_CONTR & 0x01));
     IAP_Disable();
 }
 

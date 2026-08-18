@@ -29,11 +29,13 @@ void RTC_Init(void)
     for(i = 0; i < 10000 && !(X32KCR & 0x01); i++);   /* 等待晶振稳定（超时保护防死等） */
     RTCCFG = 0x01;                    /* 选外部 32K 时钟源 + 触发寄存器初始化 */
     RTCCR  = 0x01;                    /* RTC 使能 */
-    while(RTCCFG & 0x01);             /* 等待初始化完成（~30us） */
+    for(i = 0; i < 1000 && (RTCCFG & 0x01); i++);     /* 等待初始化完成（超时保护防死等） */
 }
 
 void RTC_SetTime(const RTC_Time *t)
 {
+    uint16_t i;
+
     INIYEAR  = dec2bcd((uint8_t)(t->year % 100));   /* BCD 年份低两位 */
     INIMONTH = dec2bcd(t->month);
     INIDAY   = dec2bcd(t->day);
@@ -42,7 +44,7 @@ void RTC_SetTime(const RTC_Time *t)
     INISEC   = dec2bcd(t->second);
     INISSEC  = 0;
     RTCCFG |= 0x01;                   /* 触发 RTC 寄存器初始化 */
-    while(RTCCFG & 0x01);             /* 等待完成 */
+    for(i = 0; i < 1000 && (RTCCFG & 0x01); i++);   /* 等待完成（超时保护防死等） */
 }
 
 void RTC_GetTime(RTC_Time *t)
