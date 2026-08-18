@@ -18,3 +18,8 @@ Desktop.ini
 build_log.txt
 *.uvgui*
 ~$*
+
+# Python 脚本产物
+__pycache__/
+*.pyc
+build.log

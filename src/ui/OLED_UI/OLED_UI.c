@@ -28,6 +28,7 @@ OLED_Key OLED_UI_Key = {1,1,1,1};   								//”√”⁄¥Ê¥¢∞¥º¸◊¥Ã¨µƒΩ·ππÃÂ,ƒ¨»œ√ª”–∞
 OLED_Key OLED_UI_LastKey = {1,1,1,1};								//”√”⁄¥Ê¥¢…œ“ª¬÷∞¥º¸◊¥Ã¨µƒΩ·ππÃÂ,ƒ¨»œ√ª”–∞¥œ¬£¨∂ºŒ™1
 extern MenuPage ClockMenuPage;   /* ÕÚƒÍ¿˙“≥£®∂•≤ø ±÷”Ã¯π˝”√£© */
 extern MenuPage TimeSetMenuPage;  /*  ±º‰…Ë÷√“≥£®±‡º≠◊¥Ã¨ª˙£© */
+extern MenuPage MainMenuPage;    /* ¥≈Ã˘÷˜≤Àµ•£®»´æ÷ ±÷”Ωˆ‘⁄¥À“≥œ‘ æ£© */
 MenuPage*  CurrentMenuPage = NULL;									//»´æ÷Ω·ππÃÂ÷∏’Î£¨µ±«∞“≥√Êµƒ÷∏’Î
 MenuWindow *CurrentWindow = NULL;									//»´æ÷Ω·ππÃÂ÷∏’Î£¨µ±«∞¥∞ø⁄µƒ÷∏’Î
 MutexFlag KeyEnterFlag = FLAGEND;
@@ -103,7 +104,7 @@ void OLED_UI_ShowClock(void)
     RTC_Time t;
     static uint8_t last_h = 0xFF, last_m = 0xFF, last_s = 0xFF;   /* “Ï≥£≥ı÷µ£∫ ◊÷°±ÿÀ¢ */
 
-    if(CurrentMenuPage == &ClockMenuPage) return;
+    if(CurrentMenuPage != &MainMenuPage) return;   /* Ωˆ¥≈Ã˘÷˜≤Àµ•“≥œ‘ æ£®∆‰”‡“≥√Ê≤ª‘Ÿ»´æ÷œ‘ æ£© */
     RTC_GetTime(&t);
     if(t.hour != last_h || t.minute != last_m || t.second != last_s){   /* ÕÍ’˚ ±º‰±»Ωœ£∫…Ë÷√ ±º‰∫ÛÕ¨√Î“≤À¢–¬ */
         last_h = t.hour;
@@ -834,10 +835,13 @@ void SetLineSplitZero(void){
  * @return Œﬁ
  */
 void SetTargetScrollBarHeight(void){
+	MenuID num;   /* ≤Àµ•œÓ ˝£®0 ≤Àµ•œÓ“≥√Ê∑¿≥˝¡„£© */
+	num = GetMenuItemNum(CurrentMenuPage->General_MenuItems);
+	if(num == 0) return;   /* ÕÚƒÍ¿˙/ ±º‰…Ë÷√µ» 0 ≤Àµ•œÓ“≥√Ê£∫Œﬁπˆ∂ØÃı */
 	if(CurrentMenuPage->General_MenuType == MENU_TYPE_LIST){
-		OLED_UI_ScrollBarHeight.TargetDistance = (float)CurrentMenuPage->List_MenuArea.Height*(CurrentMenuPage->_ActiveMenuID + 1)/GetMenuItemNum(CurrentMenuPage->General_MenuItems);
+		OLED_UI_ScrollBarHeight.TargetDistance = (float)CurrentMenuPage->List_MenuArea.Height*(CurrentMenuPage->_ActiveMenuID + 1)/num;
 	}else if(CurrentMenuPage->General_MenuType == MENU_TYPE_TILES){
-		OLED_UI_ScrollBarHeight.TargetDistance = (float)(CurrentMenuPage->Tiles_ScreenWidth *(CurrentMenuPage->_ActiveMenuID + 1)/GetMenuItemNum(CurrentMenuPage->General_MenuItems));
+		OLED_UI_ScrollBarHeight.TargetDistance = (float)(CurrentMenuPage->Tiles_ScreenWidth *(CurrentMenuPage->_ActiveMenuID + 1)/num);
 	}
 }
 /**
@@ -1238,18 +1242,20 @@ MenuID_Type OLED_KeyAndEncoderRecord(void){
 		ActiveMenuID++;
 	}
 	
-	IncreaseID.Unsafe = ActiveMenuID - LastActiveID;
+		IncreaseID.Unsafe = ActiveMenuID - LastActiveID;
 	//»Áπ˚µ±«∞≤Àµ•œÓID∫≈‘ΩΩÁ£¨‘ÚΩ´∆‰œﬁ÷∆‘⁄0~MaxID-1÷Æº‰
-	if(ActiveMenuID > MaxID-1){
-		//ActiveMenuID = MaxID-1;
+	//£®0 ≤Àµ•œÓ“≥√Ê MaxID==0£∫MaxID-1 == -1 ª·»√ ID ªÿ»∆≥… -1£¨±ÿ–Î±£≥÷ 0£©
+	if(MaxID == 0){
 		ActiveMenuID = 0;
-	}
-	if(ActiveMenuID < 0){
-		//ActiveMenuID = 0;
-		ActiveMenuID = MaxID-1;
+	}else{
+		if(ActiveMenuID > MaxID-1){
+			ActiveMenuID = 0;
+		}
+		if(ActiveMenuID < 0){
+			ActiveMenuID = MaxID-1;
+		}
 	}
 
-	IncreaseID.Safe = ActiveMenuID - LastActiveID;
 	return IncreaseID;
 }
 /**

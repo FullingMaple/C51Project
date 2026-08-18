@@ -9,7 +9,8 @@
 #include "OLED_Fonts.h"
 #include "RTC.h"
 #include "calendar.h"
-#include "EEPROM.h"
+#include "EEPROM.h"
+#include "timeedit.h"
 
 extern bool ColorMode;
 extern bool OLED_UI_FpsShow;
@@ -23,9 +24,9 @@ static void SettingAuxFunc(void){}
 
 /* ================= 磁贴主屏菜单项 ================= */
 MenuItem MainMenuItems[] = {
-    {"时钟",   NULL, &ClockMenuPage,         NULL, NULL, NULL, Image_clock,     NULL, 0, 0},
     {"设置",   NULL, &SettingsMenuPage,        NULL, NULL, NULL, Image_gear,      NULL, 0, 0},
     {"关于",   NULL, &AboutThisDeviceMenuPage, NULL, NULL, NULL, Image_more,         NULL, 0, 0},
+    {"日历",   NULL, &ClockMenuPage,         NULL, NULL, NULL, Image_calendar,     NULL, 0, 0},
     {"测温",   NULL, NULL,                     NULL, NULL, NULL, Image_thermo,       NULL, 0, 0},
     {"串口",   NULL, NULL,                     NULL, NULL, NULL, Image_serial,       NULL, 0, 0},
     {"计算器", NULL, NULL,                     NULL, NULL, NULL, Image_calc2,        NULL, 0, 0},
@@ -67,25 +68,6 @@ static uint8_t  Ts_Field = 0;         /* 0=年 1=月 2=日 3=时 4=分 5=秒 */
 static uint8_t  Ts_Ready = 0;         /* 进入后首帧装载当前时间 */
 static uint8_t  Ts_LastKey = 0;       /* 键边沿去重 */
 
-static void TimeSet_IncField(uint8_t *v, uint8_t min, uint8_t max, int8_t delta)
-{
-    if(delta > 0) { if(*v < max) (*v)++; }
-    else if(delta < 0) { if(*v > min) (*v)--; }
-}
-
-static void TimeSet_Inc(int8_t delta)
-{
-    switch(Ts_Field){
-        case 0: if(delta > 0 && Ts_Edit.year < 2099) Ts_Edit.year++;
-                else if(delta < 0 && Ts_Edit.year > 2000) Ts_Edit.year--; break;
-        case 1: TimeSet_IncField(&Ts_Edit.month, 1, 12, delta); break;
-        case 2: TimeSet_IncField(&Ts_Edit.day, 1, 31, delta); break;
-        case 3: TimeSet_IncField(&Ts_Edit.hour, 0, 23, delta); break;
-        case 4: TimeSet_IncField(&Ts_Edit.minute, 0, 59, delta); break;
-        case 5: TimeSet_IncField(&Ts_Edit.second, 0, 59, delta); break;
-    }
-}
-
 /* 保存 RTC + EEPROM（断电恢复时间戳） */
 static void TimeSet_Commit(void)
 {
@@ -104,10 +86,11 @@ static void TimeSetAuxFunc(void)
     /* 键盘：键码 1=上 2=下 3=切字段 4=保存退出（0 菜单项无冲突） */
     k = Key_GetRawKey();
     if(k != 0 && Ts_LastKey == 0){
-        if(k == 1)      TimeSet_Inc(1);
-        else if(k == 2) TimeSet_Inc(-1);
-        else if(k == 3){ Ts_Field++; if(Ts_Field > 5){ TimeSet_Commit(); OLED_UI_Back(); Ts_Field = 0; } }
-        else if(k == 4){ TimeSet_Commit(); Ts_Field = 0; }   /* 框架自动返回 */
+        if(k == 1)      TimeEdit_Inc(&Ts_Edit, Ts_Field, 1);
+        else if(k == 2) TimeEdit_Inc(&Ts_Edit, Ts_Field, -1);
+        else if(k == 3){ Ts_Field = TimeEdit_NextField(Ts_Field);
+                         if(Ts_Field == TE_FIELD_YEAR){ TimeSet_Commit(); OLED_UI_Back(); } }
+        else if(k == 4){ TimeSet_Commit(); Ts_Field = 0; }   /* 返回键：保存，框架自动返回 */
     }
     Ts_LastKey = k;
 
@@ -144,12 +127,14 @@ static MenuItem ClockMenuItems[] = {
 
 static const char *ClockWeekStr[7] = {"一","二","三","四","五","六","日"};   /* 通用指针（C51 printf %s 需通用指针） */
 
+static const char *ClockWeekHead[7] = {"日","一","二","三","四","五","六"};   /* 表头逐字（与格子同 13px 节距，完全对齐） */
+
 /* 每帧绘制：日期行 + 表头 + 日历格（今天反色） */
 static void ClockAuxFunc(void)
 {
     RTC_Time t;
-    uint8_t dim, w1, idx, i, row, col;
-    int16_t x, y, wpx;
+    uint8_t dim, w1, i;
+    int16_t x, y, wpx, hx;
 
     RTC_GetTime(&t);
 
@@ -159,22 +144,19 @@ static void ClockAuxFunc(void)
         "%04d年%02d月%02d日 周%s", t.year, t.month, t.day,
         ClockWeekStr[Cal_Weekday(t.year, t.month, t.day) - 1]);
 
-    /* 表头：日 一 二 三 四 五 六 */
-    wpx = CalcStringWidth(OLED_12X12_FULL, OLED_6X8_HALF, "日 一 二 三 四 五 六");
-    OLED_ShowMixString((128 - wpx) / 2, 12, "日 一 二 三 四 五 六", OLED_12X12_FULL, OLED_6X8_HALF);
+    /* 表头：日 一 二 三 四 五 六（逐字，与日历格同 13px 节距→完全对齐） */
+    for(i = 0; i < 7; i++){
+        hx = 18 + (int16_t)i * 13;
+        OLED_ShowChinese(hx, 12, (char *)ClockWeekHead[i], OLED_12X12_FULL);
+    }
 
-    /* 日历格（6x8，今天反色；第 6 行溢出画右侧） */
+    /* 日历格（6x8，今天反色；第 6 行溢出画第 5 行右侧） */
     dim = Cal_DaysInMonth(t.year, t.month);
     w1 = Cal_Weekday(t.year, t.month, 1);
     for(i = 1; i <= dim; i++) {
-        idx = (uint8_t)((w1 - 1) + (i - 1));
-        row = idx / 7;
-        col = idx % 7;
-        x = 22 + (int16_t)col * 12;
-        y = 24 + (int16_t)row * 8;
-        if(row >= 5) { x = 106 + (int16_t)(i - 29) * 6; y = 56; }   /* 6 行月末行溢出：画第 5 行右侧（x=106 起，与 22-28 不重叠） */   /* 6 行月末行溢出：画表头行右侧（避免与第 5 行重叠） */
+        Cal_GetCellPos(i, dim, w1, &x, &y);
         OLED_ShowNum(x, y, i, (i >= 10) ? 2 : 1, OLED_6X8_HALF);
-        if(i == t.day) OLED_ReverseArea(x, y, 8, 8);
+        if(i == t.day) OLED_ReverseArea(x, y, (i >= 10) ? 12 : 6, 8);
     }
 }
 

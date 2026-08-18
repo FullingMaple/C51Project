@@ -62,14 +62,14 @@ def main():
     if not chars:
         print('用法: python add_fonts.py 字1 字2 ...')
         return 1
-    # 检查重复
+    # 检查重复（只在 OLED_CF12x12 表体内搜索，避免 16x16 同名误判）
     raw = open(FONTS_FILE, 'rb').read()
     txt = raw.decode('gbk')
-    for ch in chars:
-        if ('{{"%s"},' % ch) in txt:
-            print('跳过（已在字库）: ' + ch)
-            chars.remove(ch)
+    m = re.search(r'OLED_CF12x12\[\] = \{(.*?)\};', txt, re.S)
+    body = m.group(1) if m else txt
+    chars = [ch for ch in chars if ('{{"%s"},' % ch) not in body]
     if not chars:
+        print('全部已在 12x12 字库，跳过')
         return 0
     # 生成条目
     entries = []

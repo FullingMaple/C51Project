@@ -35,7 +35,7 @@ void System_Init(void)
     /* RTC 断电恢复：EEPROM 时间戳有效则恢复，否则设默认时间（可在设置页修改） */
     {
         RTC_Time t;
-        RTC_Time def = {2026, 8, 18, 14, 0, 0};   /* 默认：2026-08-18 14:00:00 */
+        RTC_Time def = {2026, 8, 18, 0, 0, 0};    /* 默认：2026-08-18 00:00:00 */
         if(EEPROM_LoadTime(&t) == 0){ RTC_SetTime(&t); }
         else { RTC_SetTime(&def); }
     }
