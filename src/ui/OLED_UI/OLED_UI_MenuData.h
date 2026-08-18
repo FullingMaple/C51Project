@@ -11,7 +11,7 @@ extern MenuItem MainMenuItems[],SettingsMenuItems[],AboutThisDeviceMenuItems[],
 AboutOLED_UIMenuItems[],DrawMenuItems[],MoreMenuItems[],Font8MenuItems[] ,Font12MenuItems[] ,
 Font16MenuItems[] ,Font20MenuItems[],LongMenuItems[],SpringMenuItems[],LongListMenuItems[],SmallAreaMenuItems[];
 
-extern MenuPage MainMenuPage,SettingsMenuPage,AboutThisDeviceMenuPage,ClockMenuPage,TimeSetMenuPage,
+extern MenuPage MainMenuPage,SettingsMenuPage,AboutThisDeviceMenuPage,ClockMenuPage,
 AboutOLED_UIMenuPage,DrawMenuPage,MoreMenuPage,Font8MenuPage,Font12MenuPage,Font16MenuPage,
 Font20MenuPage,LongMenuPage,SpringMenuPage,LongListMenuPage,SmallAreaMenuPage;
 

@@ -27,7 +27,6 @@ OLED_UI_Counter OLED_FPS = {0,0,0};									//用于存储帧率的结构体
 OLED_Key OLED_UI_Key = {1,1,1,1};   								//用于存储按键状态的结构体,默认没有按下，都为1
 OLED_Key OLED_UI_LastKey = {1,1,1,1};								//用于存储上一轮按键状态的结构体,默认没有按下，都为1
 extern MenuPage ClockMenuPage;   /* 万年历页（顶部时钟跳过用） */
-extern MenuPage TimeSetMenuPage;  /* 时间设置页（编辑状态机） */
 extern MenuPage MainMenuPage;    /* 磁贴主菜单（全局时钟仅在此页显示） */
 MenuPage*  CurrentMenuPage = NULL;									//全局结构体指针，当前页面的指针
 MenuWindow *CurrentWindow = NULL;									//全局结构体指针，当前窗口的指针
@@ -1634,9 +1633,8 @@ static bool OLED_UI_IsStaticIdle(void)
         return false;
     }
 
-    /* 实时页面（万年历时钟/时间设置编辑）恒重绘：静态跳过会导致时间/日期不刷新 */
+    /* 实时页（时间页恒重绘：静态跳过会导致时间不刷新） */
     if(CurrentMenuPage == &ClockMenuPage) return false;
-    if(CurrentMenuPage == &TimeSetMenuPage) return false;
     if(FadeOutFlag != FLAGEND) return false;        /* 渐隐动画中 */
     if(KeyEnterFlag != FLAGEND) return false;       /* 进入事件处理中 */
     if(CurrentWindow != NULL) return false;         /* 窗口组件打开（进度条动画） */
