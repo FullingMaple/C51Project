@@ -6,6 +6,26 @@
 
 ---
 
+## 开工指引（第一次拿到项目，照做）
+
+1. **clone 仓库**（VSCode 终端）：
+   ```bash
+   git clone https://github.com/FullingMaple/C51Project.git
+   cd C51Project
+   ```
+2. **切到自己的分支**（你是 NTC 负责人）：
+   ```bash
+   git checkout feature/ntc
+   ```
+3. **读本指南**：§0（工作方式 + 分支铁律 + Skill 用法）→ §2（环境速通）
+4. **开工**：跑 `/c51-intellisense` + `/setup-matt-pocock-skills`（Skill 见 §0）→ 按 §2 切虚拟屏 → 给 AI 任务书（§4）
+5. **完成**：验证清单全过 → 推分支 → 通知主开发合入：
+   ```bash
+   git push origin feature/ntc
+   ```
+
+---
+
 ## 0. 工作方式（先读这个）
 
 ```
@@ -94,11 +114,7 @@ git checkout feature/ntc
 
 ### 2.2 构建（每次改完代码都执行）
 
-在 VSCode 终端（Git Bash）里运行：
-
-```bash
-"D:/APP/C51V961/UV4/UV4.exe" -b "Project.uvproj" -o "build_log.txt" && sleep 25 && grep -E "error|Program Size" build_log.txt
-```
+回到Keil 5进行构建
 
 **成功**：看到 `0 Error(s)` 和 `Program Size: ...`。
 **失败**：把 `build_log.txt` 里的报错整段复制给 AI，让它修。
