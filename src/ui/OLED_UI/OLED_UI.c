@@ -1256,6 +1256,7 @@ MenuID_Type OLED_KeyAndEncoderRecord(void){
 		}
 	}
 
+	IncreaseID.Safe = ActiveMenuID - LastActiveID;
 	return IncreaseID;
 }
 /**
