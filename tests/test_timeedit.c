@@ -1,6 +1,8 @@
 /* test_timeedit.c —— 时间编辑状态机主机单测（gcc）
- * 编译：gcc tests/test_timeedit.c src/ui/Driver/Hardware_Driver/timeedit.c src/ui/Driver/Hardware_Driver/RTC.c -I src/ui/Driver/Hardware_Driver -o /tmp/tte
- * 注：RTC.c 引用 STC8h.h 无法在 gcc 编译 → 用桩代替（见下）
+ * 语义：字段调整采用循环回绕（电子表式）——
+ *   到边界后按同方向继续即回绕：hour 0 按"下"→23，23 按"上"→0；分/秒 0↔59；
+ *   月 1↔12、日 1↔31、年 2000↔2099。
+ * 编译：gcc tests/test_timeedit.c src/ui/Driver/Hardware_Driver/timeedit.c -I src/ui/Driver/Hardware_Driver -o /tmp/tte && /tmp/tte
  */
 #include <stdio.h>
 #include <assert.h>
@@ -10,41 +12,38 @@ int main(void)
 {
     RTC_Time t;
 
-    /* ---- 边界钳制：年 2000~2099 ---- */
+    /* ---- 年 2000~2099 循环回绕 ---- */
     t = (RTC_Time){2099, 8, 18, 0, 0, 0};
-    assert(TimeEdit_Inc(&t, 0, 1) == 0);   /* 2099 不能再加 */
-    assert(t.year == 2099);
-    assert(TimeEdit_Inc(&t, 0, -1) == 1);
-    assert(t.year == 2098);
+    assert(TimeEdit_Inc(&t, 0, 1) == 1 && t.year == 2000);   /* 2099 按"上"回绕到 2000 */
+    assert(TimeEdit_Inc(&t, 0, -1) == 1 && t.year == 2099);  /* 2000 按"下"回绕到 2099 */
     t = (RTC_Time){2000, 1, 1, 0, 0, 0};
-    assert(TimeEdit_Inc(&t, 0, -1) == 0);  /* 2000 不能再减 */
-    assert(t.year == 2000);
+    assert(TimeEdit_Inc(&t, 0, -1) == 1 && t.year == 2099);
+    assert(TimeEdit_Inc(&t, 0, 1) == 1 && t.year == 2000);
 
-    /* ---- 月 1~12 ---- */
+    /* ---- 月 1~12 循环回绕 ---- */
     t = (RTC_Time){2026, 12, 18, 0, 0, 0};
-    assert(TimeEdit_Inc(&t, 1, 1) == 0);
-    assert(t.month == 12);
-    assert(TimeEdit_Inc(&t, 1, -1) == 1 && t.month == 11);
+    assert(TimeEdit_Inc(&t, 1, 1) == 1 && t.month == 1);     /* 12 按"上"回绕到 1 */
+    assert(TimeEdit_Inc(&t, 1, -1) == 1 && t.month == 12);   /* 1 按"下"回绕到 12 */
     t = (RTC_Time){2026, 1, 18, 0, 0, 0};
-    assert(TimeEdit_Inc(&t, 1, -1) == 0 && t.month == 1);
+    assert(TimeEdit_Inc(&t, 1, -1) == 1 && t.month == 12);
 
-    /* ---- 日 1~31（简单钳制，不联动月） ---- */
+    /* ---- 日 1~31 循环回绕（简单回绕，不联动月） ---- */
     t = (RTC_Time){2026, 2, 31, 0, 0, 0};
-    assert(TimeEdit_Inc(&t, 2, 1) == 0 && t.day == 31);
-    assert(TimeEdit_Inc(&t, 2, -1) == 1 && t.day == 30);
+    assert(TimeEdit_Inc(&t, 2, 1) == 1 && t.day == 1);       /* 31 按"上"回绕到 1 */
+    assert(TimeEdit_Inc(&t, 2, -1) == 1 && t.day == 31);     /* 1 按"下"回绕到 31 */
     t = (RTC_Time){2026, 8, 1, 0, 0, 0};
-    assert(TimeEdit_Inc(&t, 2, -1) == 0 && t.day == 1);
+    assert(TimeEdit_Inc(&t, 2, -1) == 1 && t.day == 31);
 
-    /* ---- 时 0~23 / 分秒 0~59 ---- */
+    /* ---- 时 0~23 / 分秒 0~59 循环回绕 ---- */
     t = (RTC_Time){2026, 8, 18, 23, 59, 59};
-    assert(TimeEdit_Inc(&t, 3, 1) == 0 && t.hour == 23);
-    assert(TimeEdit_Inc(&t, 4, 1) == 0 && t.minute == 59);
-    assert(TimeEdit_Inc(&t, 5, 1) == 0 && t.second == 59);
+    assert(TimeEdit_Inc(&t, 3, 1) == 1 && t.hour == 0);      /* 23 按"上"回绕到 0 */
+    assert(TimeEdit_Inc(&t, 4, 1) == 1 && t.minute == 0);    /* 59 按"上"回绕到 0 */
+    assert(TimeEdit_Inc(&t, 5, 1) == 1 && t.second == 0);    /* 59 按"上"回绕到 0 */
     t = (RTC_Time){2026, 8, 18, 0, 0, 0};
-    assert(TimeEdit_Inc(&t, 3, -1) == 0 && t.hour == 0);
-    assert(TimeEdit_Inc(&t, 4, -1) == 0 && t.minute == 0);
-    assert(TimeEdit_Inc(&t, 5, -1) == 0 && t.second == 0);
-    assert(TimeEdit_Inc(&t, 3, 1) == 1 && t.hour == 1);
+    assert(TimeEdit_Inc(&t, 3, -1) == 1 && t.hour == 23);    /* 0 按"下"回绕到 23（用户期望） */
+    assert(TimeEdit_Inc(&t, 4, -1) == 1 && t.minute == 59);  /* 0 按"下"回绕到 59 */
+    assert(TimeEdit_Inc(&t, 5, -1) == 1 && t.second == 59);  /* 0 按"下"回绕到 59 */
+    assert(TimeEdit_Inc(&t, 3, 1) == 1 && t.hour == 0);      /* 23 按"上"回绕到 0 */
 
     /* ---- delta=0 不变化 ---- */
     t = (RTC_Time){2026, 8, 18, 12, 30, 30};
