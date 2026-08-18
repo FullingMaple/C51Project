@@ -1771,6 +1771,7 @@ void OLED_UI_InterruptHandler(void){
 				EnterEventMenuItem();
 				if (CurrentMenuPage->General_MenuItems[CurrentMenuPage->_ActiveMenuID].List_BoolRadioBox != NULL) {
 				    *CurrentMenuPage->General_MenuItems[CurrentMenuPage->_ActiveMenuID].List_BoolRadioBox = !(*CurrentMenuPage->General_MenuItems[CurrentMenuPage->_ActiveMenuID].List_BoolRadioBox);
+				    SetEnterFlag();   /* 开关翻转后强制重绘一帧立即生效（否则静态跳过不刷新画面） */
 				}
 			}else{
 				OLED_SustainCounter.count = 0;
