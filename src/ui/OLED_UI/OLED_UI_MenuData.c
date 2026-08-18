@@ -10,6 +10,7 @@
 #include "RTC.h"
 #include "EEPROM.h"
 #include "timeedit.h"
+#include "calendar.h"   /* Cal_Weekday（显示模式日期行星期） */
 #include "OLED_UI_Driver.h"   /* Buzzer_Beep / Delay_ms（保存失败提示） */
 
 extern bool ColorMode;
@@ -63,6 +64,8 @@ static MenuItem TimeMenuItems[] = {
     {NULL}
 };
 
+static const char *ClockWeekStr[7] = {"一","二","三","四","五","六","日"};   /* 日期行星期（C51 %s 需通用指针） */
+
 static RTC_Time Ts_Edit;              /* 编辑缓冲 */
 static uint8_t  Ts_Field = 0;         /* 0=年 1=月 2=日 3=时 4=分 5=秒 */
 static uint8_t  Ts_Ready = 0;         /* 进入后首帧装载当前时间 */
@@ -93,7 +96,7 @@ static void TimeSet_Commit(void)
 static void TimeAuxFunc(void)
 {
     uint8_t k;
-    int16_t x;
+    int16_t x, wpx;
     RTC_Time now;
 
     if(!Ts_Ready){ RTC_GetTime(&Ts_Edit); Ts_Ready = 1; }
@@ -119,17 +122,23 @@ static void TimeAuxFunc(void)
     Ts_LastKey = k;
 
     if(Ts_Editing == 0){
-        /* 显示模式：8x16 大时钟 + 底部提示（12x12 汉字 + 6x8 符号） */
+        /* 显示模式：日期行（12x12 汉字 + 6x8 数字）+ 8x16 大时钟 + 底部提示 */
         RTC_GetTime(&now);
-        OLED_Printf(32, 24, OLED_8X16_HALF, "%02d:%02d:%02d",
+        wpx = CalcStringWidth(OLED_12X12_FULL, OLED_6X8_HALF, "%04d年%02d月%02d日 周",
+            (int)now.year, (int)now.month, (int)now.day);
+        OLED_PrintfMix((128 - wpx - 12) / 2, 4, OLED_12X12_FULL, OLED_6X8_HALF,
+            "%04d年%02d月%02d日 周%s", (int)now.year, (int)now.month, (int)now.day,
+            ClockWeekStr[Cal_Weekday(now.year, now.month, now.day) - 1]);
+        OLED_Printf(32, 22, OLED_8X16_HALF, "%02d:%02d:%02d",
             (int)now.hour, (int)now.minute, (int)now.second);
-        OLED_ShowMixString(37, 48, "确定=编辑", OLED_12X12_FULL, OLED_6X8_HALF);
+        OLED_ShowMixString(37, 50, "确定=编辑", OLED_12X12_FULL, OLED_6X8_HALF);
         return;
     }
 
-    /* 编辑模式：日期行（12x12 汉字 + 7x12 数字）与时间行（7x12）统一字号、水平居中
+    /* 编辑模式：标题 + 日期行（12x12 汉字 + 7x12 数字）与时间行（7x12）统一字号、水平居中
      * 注意：变参 printf 中 uint8_t 按 1 字节压栈而 %d 读 2 字节会粘连，
      *       必须 (int) 强转（C51 经典坑） */
+    OLED_ShowMixString(40, 2, "时间设置", OLED_12X12_FULL, OLED_6X8_HALF);
     OLED_PrintfMix(18, 18, OLED_12X12_FULL, OLED_7X12_HALF, "%04d年%02d月%02d日",
         (int)Ts_Edit.year, (int)Ts_Edit.month, (int)Ts_Edit.day);
     OLED_Printf(36, 36, OLED_7X12_HALF, "%02d:%02d:%02d",
@@ -144,6 +153,9 @@ static void TimeAuxFunc(void)
         case 4: x = 57;  OLED_ReverseArea(x, 36, 14, 12); break;   /* 分 */
         case 5: x = 78;  OLED_ReverseArea(x, 36, 14, 12); break;   /* 秒 */
     }
+
+    /* 底部操作提示（纯 ASCII 6x8；保存失败时被诊断行覆盖） */
+    OLED_ShowString(22, 52, "1/2=CHG 3=NEXT 4=SAVE", OLED_6X8_HALF);
 
     /* 保存失败诊断：底部 6x8 "EEP S1 B3 05>FF"（阶段/字节/期望>读回），3 秒后退出编辑 */
     if(Ts_NeedExit){
