@@ -71,6 +71,7 @@ static uint8_t  Ts_Field = 0;         /* 0=年 1=月 2=日 3=时 4=分 5=秒 */
 static uint8_t  Ts_Ready = 0;         /* 进入后首帧装载当前时间 */
 static uint8_t  Ts_LastKey = 0;       /* 键边沿去重 */
 static uint8_t  Ts_Editing = 0;       /* 0=显示模式 1=编辑模式 */
+static uint8_t  Ts_Choice = 0;        /* 显示模式底部选项：0=确定(返回) 1=编辑 */
 static uint8_t  Ts_NeedExit = 0;      /* 保存失败：诊断展示后退出编辑 */
 static uint32_t Ts_ExitTick = 0;      /* 延迟退出时刻（GetTick 毫秒） */
 
@@ -87,6 +88,7 @@ static void TimeSet_Commit(void)
     }else{
         Ts_NeedExit = 0;
         Ts_Editing = 0;                                             /* 保存成功：退回显示模式 */
+        Ts_Choice = 0;                                              /* 底部选项重置为"确定" */
         CurrentMenuPage->General_ParentMenuPage = &MainMenuPage;    /* 恢复框架返回 */
     }
     Ts_Ready = 0;
@@ -105,11 +107,17 @@ static void TimeAuxFunc(void)
     k = Key_GetRawKey();
     if(k != 0 && Ts_LastKey == 0){
         if(Ts_Editing == 0){
-            if(k == 3){
-                Ts_Editing = 1;
-                Ts_Field = 0;
-                RTC_GetTime(&Ts_Edit);                            /* 编辑基准 = 当前真实时间 */
-                CurrentMenuPage->General_ParentMenuPage = NULL;   /* 编辑中屏蔽框架返回（返回键=保存） */
+            if(k == 1){ Ts_Choice = 0; }        /* 上：选择"确定" */
+            else if(k == 2){ Ts_Choice = 1; }   /* 下：选择"编辑" */
+            else if(k == 3){
+                if(Ts_Choice == 0){
+                    OLED_UI_Back();             /* 选中"确定"→ 返回主菜单 */
+                }else{
+                    Ts_Editing = 1;             /* 选中"编辑"→ 进入编辑 */
+                    Ts_Field = 0;
+                    RTC_GetTime(&Ts_Edit);                            /* 编辑基准 = 当前真实时间 */
+                    CurrentMenuPage->General_ParentMenuPage = NULL;   /* 编辑中屏蔽框架返回（返回键=保存） */
+                }
             }
         }else{
             if(k == 1)      TimeEdit_Inc(&Ts_Edit, Ts_Field, 1);
@@ -131,7 +139,10 @@ static void TimeAuxFunc(void)
             ClockWeekStr[Cal_Weekday(now.year, now.month, now.day) - 1]);
         OLED_Printf(32, 22, OLED_8X16_HALF, "%02d:%02d:%02d",
             (int)now.hour, (int)now.minute, (int)now.second);
-        OLED_ShowMixString(37, 50, "确定=编辑", OLED_12X12_FULL, OLED_6X8_HALF);
+        /* 底部二选一选项：确定/编辑（上/下切换，反色框指示，确定键执行） */
+        OLED_ShowMixString(34, 50, "确定  编辑", OLED_12X12_FULL, OLED_6X8_HALF);
+        if(Ts_Choice == 0) OLED_ReverseArea(34, 50, 12, 12);        /* 确定 */
+        else               OLED_ReverseArea(58, 50, 12, 12);        /* 编辑 */
         return;
     }
 
