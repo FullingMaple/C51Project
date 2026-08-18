@@ -9,7 +9,7 @@ add_fonts.py —— 给 OLED_Fonts.c 的 12x12 字库补字模（GBK 编码，Wi
 import sys, io, re, os
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
-FONTS_FILE = os.path.join(os.path.dirname(__file__), '..', '..', 'src',
+FONTS_FILE = os.path.join(os.path.dirname(__file__), 'src',
                           'ui', 'Driver', 'Software_Driver', 'OLED_Fonts.c')
 SIMSUM = r'C:\Windows\Fonts\simsun.ttc'
 SIZE = 12                      # 12x12 汉字

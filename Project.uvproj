@@ -427,12 +427,22 @@
               <FilePath>.\src\ui\Driver\Hardware_Driver\OLED_driver.c</FilePath>
             </File>
             <File>
+              <FileName>calendar.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\ui\Driver\Hardware_Driver\calendar.c</FilePath>
+            </File>
+            <File>
+              <FileName>RTC.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\ui\Driver\Hardware_Driver\RTC.c</FilePath>
+            </File>
+            <File>
               <FileName>IR_Remote.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\ui\Driver\Hardware_Driver\IR_Remote.c</FilePath>
             </File>
             <File>
-              <FileName>OLED_UI_Driver.c</FileName>
+<FileName>OLED_UI_Driver.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\ui\Driver\Hardware_Driver\OLED_UI_Driver.c</FilePath>
             </File>

@@ -1,5 +1,6 @@
 #include "OLED_UI.h"
 #include "OLED.h"
+#include "RTC.h"
 #include "OLED_UI_Launcher.h"
 #include "c51lib.h"
 #include <stdarg.h>
@@ -25,6 +26,7 @@ static code uint8_t patterns[5][2][2] = {
 OLED_UI_Counter OLED_FPS = {0,0,0};									//用于存储帧率的结构体
 OLED_Key OLED_UI_Key = {1,1,1,1};   								//用于存储按键状态的结构体,默认没有按下，都为1
 OLED_Key OLED_UI_LastKey = {1,1,1,1};								//用于存储上一轮按键状态的结构体,默认没有按下，都为1
+extern MenuPage ClockMenuPage;   /* 万年历页（顶部时钟跳过用） */
 MenuPage*  CurrentMenuPage = NULL;									//全局结构体指针，当前页面的指针
 MenuWindow *CurrentWindow = NULL;									//全局结构体指针，当前窗口的指针
 MutexFlag KeyEnterFlag = FLAGEND;
@@ -89,6 +91,23 @@ void OLED_UI_ShowFPS(void){
 		buf[0] = (char)('0' + v % 10);
 		OLED_ShowString(110, 0, buf, OLED_6X8_HALF);
 	}
+}
+
+/**
+ * @brief 顶部全局时钟（左上角 6x8，与帧率同高）
+ * @note 每秒刷新一次；万年历页顶部被日期行占用，跳过
+ */
+void OLED_UI_ShowClock(void)
+{
+    RTC_Time t;
+    static uint8_t last_sec = 0xFF;   /* 异常初值：首帧必刷 */
+
+    if(CurrentMenuPage == &ClockMenuPage) return;
+    RTC_GetTime(&t);
+    if(t.second != last_sec){
+        last_sec = t.second;
+        OLED_Printf(0, 0, OLED_6X8_HALF, "%02d:%02d:%02d", t.hour, t.minute, t.second);
+    }
 }
 /**
  * @brief 获取当前页面的字体宽度
@@ -1639,6 +1658,7 @@ void OLED_UI_MainLoop(void){
 	 * ——静态帧率突破 CPU 重绘瓶颈；按键/动画/窗口发生时自动恢复重绘 */
 	if(OLED_UI_IsStaticIdle()){
 		OLED_UI_ShowFPS();
+		OLED_UI_ShowClock();
 		OLED_Update();
 		return;
 	}
@@ -1659,6 +1679,7 @@ void OLED_UI_MainLoop(void){
 	//显示FPS
 		OLED_FPS.count++;
 OLED_UI_ShowFPS();
+OLED_UI_ShowClock();
 	//刷屏
 	OLED_Update();
 }
