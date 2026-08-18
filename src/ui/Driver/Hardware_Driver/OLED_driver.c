@@ -300,12 +300,9 @@ void OLED_Update(void)
 {
 #if(VIRTUAL_OLED)
     /* 虚拟 OLED：整屏经 USB-CDC 发送（参数语义以整屏 (0,0,128,8) 为准）
-     * 节流：每 2 帧发一次（发送率减半，虚拟屏刷新率足够）
-     * USB 忙/未枚举时跳过本帧：库发送为阻塞式，主机读取不及时会死等 */
-    static uint8_t vframe;
+     * 诊断版：去掉节流/bUsbInBusy 忙跳过，对齐官方 69 号例程无条件发送 */
     P22 = 0;
-    vframe++;
-    if((vframe & 1) == 0 && !bUsbInBusy && DeviceState == DEVSTATE_CONFIGURED)
+    if(DeviceState == DEVSTATE_CONFIGURED)
     {
         OLED12864_ShowPicture(0, 0, OLED_WIDTH, OLED_PAGES, &OLED_DisplayBuf[0][0]);
     }
