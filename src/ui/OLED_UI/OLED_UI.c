@@ -38,19 +38,19 @@ int tmpi=0;                                                       	//Gif动画缓速
 /***************************这些变量用于存储需要绑定动画的控件的参数*******************************/
 
 // OLED_UI_Cursor是用于存储光标的结构体，控制光标的移动
-OLED_ChangeArea OLED_UI_Cursor;
+OLED_ChangeArea OLED_UI_Cursor = {0};
 // OLED_UI_MenuFrame是用于存储菜单边框的结构体，控制菜单边框与内部组件的移动
-OLED_ChangeArea OLED_UI_MenuFrame;
+OLED_ChangeArea OLED_UI_MenuFrame = {0};
 // OLED_UI_Window是用于存储窗口的结构体，控制窗口与内部组件的移动
-OLED_ChangeArea OLED_UI_Window;
+OLED_ChangeArea OLED_UI_Window = {0};
 // OLED_UI_ScrollBarHeight是用于存储滚动条高度的结构体，控制滚动条高度的变化
-OLED_ChangeDistance OLED_UI_ScrollBarHeight;
+OLED_ChangeDistance OLED_UI_ScrollBarHeight = {0};
 // OLED_UI_ProbWidth是用于存储进度条宽度的结构体，控制进度条宽度的变化
-OLED_ChangeDistance OLED_UI_ProbWidth;
+OLED_ChangeDistance OLED_UI_ProbWidth = {0};
 // OLED_UI_PageStartPoint是用于存储页面起始点的结构体，控制页面整体的移动
-OLED_ChangePoint OLED_UI_PageStartPoint ;
+OLED_ChangePoint OLED_UI_PageStartPoint = {0};
 // OLED_UI_LineStep是用于存储行间距的结构体，控制行间距的变化
-OLED_ChangeDistance OLED_UI_LineStep;
+OLED_ChangeDistance OLED_UI_LineStep = {0};
 
 /**
  * @brief 获取当前屏幕刷新率，结果存储在全局变量OLED_FPS.value中
@@ -1377,13 +1377,13 @@ void OLED_UI_CreateWindow(MenuWindow* window){
  * @param 无
  * @return 无
  */
-uint8_t Diag_FadeOutSeq;              /* 诊断：FadeOut 序列号（原 static 提升，供调试显示） */
+uint8_t Diag_FadeOutSeq = 0;              /* 诊断：FadeOut 序列号（原 static 提升，供调试显示） */
 
 void RunFadeOut(void){
 
 	uint8_t FadeOut_Seq = Diag_FadeOutSeq;
-	static uint32_t FadeOut_Seq_StartTick;
-	static int16_t FadeOut_x0, FadeOut_y0, FadeOut_width, FadeOut_height;
+	static uint32_t FadeOut_Seq_StartTick = 0;
+	static int16_t FadeOut_x0 = 0, FadeOut_y0 = 0, FadeOut_width = 0, FadeOut_height = 0;
 
 	/*如果当前的FadeOutFlag已经被置位，则说明正在运行渐隐效果。
 	当前在运行渐隐效果的前提条件有2个：
