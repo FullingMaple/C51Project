@@ -177,6 +177,45 @@
 
 **MDU16 库（Step3）已放弃（2026-08-17 评估结论）**：动画插值 float 加速收益仅 +5~10%（动画 100-200fps 已超面板 ~100Hz 上限，视觉无差别），且库有中断冲突/编译/仿真风险——不值得。**计算器功能时直接用 MDU16 寄存器**（官方例程 46 号，定点乘除真实加速 + 答辩亮点）
 
+## 4d. 随机状态根治 + 亮度功能最终删除（2026-08-18 会话）
+
+### 重大根因发现：无初值全局变量 = 启动随机状态（一切"玄学"bug 的源头）
+
+**机制**：工程未编译 STARTUP.A51（根目录文件只是模板遗留；uvproj 的 `<StartupFile>` 字段指向库启动 C51L.LIB）→ 库启动**拷贝初始化段（?C_INITSEG，带初值变量正常）但不处理无初值变量** → 所有无初值全局 = 上电随机值 → 每次烧录行为不同。
+
+**症状链**（**同 hex 不同烧录不同行为 = 铁证**）：
+- 进设置页"卡死"（页面不切换）：`Diag_FadeOutSeq` 随机≠0 → RunFadeOut 从中间步进开始 + FadeOut_Seq_StartTick 随机导致计时恒假 → 渐隐卡死 → FadeOutFlag 永不复位
+- 菜单页恒重绘 30fps：7 个动画结构（Cursor/MenuFrame/PageStartPoint 等）随机 → IsStaticIdle 判定"未到位" → 每帧全量重绘
+- 亮度值 16000+（历史 bug）：相关状态随机
+- 帧率"时高时低"（30↔90）：静态跳过判定随随机值变化
+
+**修复（0bd0d48）**：10 处无初值变量显式 `= 0`——7 个动画结构（OLED_UI_Cursor/MenuFrame/Window/ScrollBarHeight/ProbWidth/PageStartPoint/LineStep）+ Diag_FadeOutSeq + FadeOut_Seq_StartTick + FadeOut_x0/y0/width/height。构建 code +464B（初值进 ?C_INITSEG，证明生效）。**上板确认：进页正常、反复进出/重启/重烧行为一致。**
+
+**⚠️ 铁律**：本项目无 STARTUP.A51 参与编译，**所有全局/static 变量必须显式初始化**！新增变量时检查。
+
+### 亮度功能最终删除（用户定案）
+
+- 恢复尝试（TDD 加固版 bc3b773：Clamp/Contrast 纯逻辑 + 主机单测 tests/test_brightness.c + IntBoxValue[5]→[8] + 渲染前钳制）→ 窗口交互仍有问题（进窗口卡退/空白/跳菜单）
+- 窗口关闭"滑出动画收敛依赖"是框架隐患（CurrentWindow 等动画到位才置 NULL）——简化方案（f576e73：关闭即消失）尝试后用户仍不满意
+- **最终决定：不要亮度功能**。回退到 `3fafbda`（tag `snapshot-no-brightness-20260818`），亮度相关提交全部移出 dev 历史（reflog 保留）
+
+### 其他修复
+- **BoolBox 开关项立即生效（3fafbda）**：翻转在 ISR 完成但不触发重绘（IsStaticIdle 静态跳过）→ 按上下键才生效。修复：翻转后 `SetEnterFlag()` 强制重绘一帧（回调 NULL 只复位标志，无害）
+- 设置页空白元凶（此前定位）：亮度项 `sprintf(IntBoxValue[5], "%d", 16000+)` 栈溢出写坏渲染状态——删亮度后消失（恢复时曾加固，现随亮度删除）
+
+### 经验教训（新）
+1. **C51 无 STARTUP.A51**：带初值变量正常（库启动拷贝 ?C_INITSEG），无初值变量=随机。判断"初始化是否执行"看 map 的 ?C_STARTUP 来源（库 vs 工程 obj）
+2. **grep 中文字符 `\b` 无效**（GBK 无单词边界）——"屏"字模误删事件。检查字库引用必须单字全量比对（MenuData 字符串 vs 字库 Index）
+3. **STC-ISP 下载 = 软复位跳转（不清 SRAM）**；上电复位才洗 SRAM。"重烧不恢复"≠EEPROM（已勾每次擦除）、≠Flash（每次重写）
+4. **帧率语义**：~30fps=全量重绘（IsStaticIdle=false）；~90fps=静态跳过（显示上次渲染帧率）
+5. **同 hex 行为随烧录变化 = 随机初值铁证**（比断电实验更直接）
+6. 窗口机制（动画收敛依赖 CurrentWindow=NULL）在本移植版不可靠——新功能若用窗口需谨慎或简化
+
+### 当前状态（2026-08-18）
+- dev = `3fafbda`（设置页 5 项：深浅色/显示帧率/语言/提示音/返回）
+- 构建 0 Error/2 Warning（已知 L15），删亮度版
+- 回档点：tag `snapshot-no-brightness-20260818`
+
 ## 5. 剩余事项（可选）
 
 1. 动画帧率 30fps 已到 SSD1306 规格上限（400kHz）——若想更高：减少动画期全屏刷新（区域刷新）或接受现状
