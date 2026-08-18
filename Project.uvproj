@@ -432,6 +432,11 @@
               <FilePath>.\src\ui\Driver\Hardware_Driver\calendar.c</FilePath>
             </File>
             <File>
+              <FileName>EEPROM.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\ui\Driver\Hardware_Driver\EEPROM.c</FilePath>
+            </File>
+            <File>
               <FileName>RTC.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\ui\Driver\Hardware_Driver\RTC.c</FilePath>

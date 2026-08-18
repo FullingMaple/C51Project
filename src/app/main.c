@@ -11,6 +11,7 @@
 #include "OLED_UI_Driver.h"
 #include "IR_Remote.h"
 #include "RTC.h"
+#include "EEPROM.h"
 
 /* USB-CDC 库要求实现的 STC-ISP 用户命令接口（弱符号） */
 char *USER_STCISPCMD = "@STCISP#";
@@ -30,6 +31,14 @@ void System_Init(void)
     Buzzer_Init();              /* P5.4 按键音（设置页"提示音"开关） */
     IR_Init();                  /* 红外遥控：P3.5 + T1 100us 采样解码 */
     RTC_Init();                 /* 内部 RTC：外部 32.768K 晶振（万年历/顶部时钟） */
+
+    /* RTC 断电恢复：EEPROM 时间戳有效则恢复，否则设默认时间（可在设置页修改） */
+    {
+        RTC_Time t;
+        RTC_Time def = {2026, 8, 18, 14, 0, 0};   /* 默认：2026-08-18 14:00:00 */
+        if(EEPROM_LoadTime(&t) == 0){ RTC_SetTime(&t); }
+        else { RTC_SetTime(&def); }
+    }
 }
 
 void main(void)

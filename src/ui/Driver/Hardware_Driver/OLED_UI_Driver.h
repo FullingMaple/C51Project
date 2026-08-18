@@ -19,6 +19,7 @@ uint8_t  Key_GetUpStatus(void);     /* 0=按下 1=松开 */
 uint8_t  Key_GetDownStatus(void);
 uint8_t  Key_GetEnterStatus(void);
 uint8_t  Key_GetBackStatus(void);
+uint8_t  Key_GetRawKey(void);     /* 原始键码 1~16（0=无键） */
 
 void     Delay_ms(uint16_t xms);    /* 软件延时（NOP 循环近似） */
 void     Delay_s(uint16_t xs);

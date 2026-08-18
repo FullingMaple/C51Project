@@ -206,6 +206,8 @@ uint8_t Key_GetUpStatus(void)    { return ((Key_Hold == KEY_ADC_UP)    || (IR_Lo
 uint8_t Key_GetDownStatus(void)  { return ((Key_Hold == KEY_ADC_DOWN)  || (IR_LogicalKey == KEY_ADC_DOWN))  ? 0 : 1; }
 uint8_t Key_GetEnterStatus(void) { return ((Key_Hold == KEY_ADC_ENTER) || (IR_LogicalKey == KEY_ADC_ENTER)) ? 0 : 1; }
 uint8_t Key_GetBackStatus(void)  { return ((Key_Hold == KEY_ADC_BACK)  || (IR_LogicalKey == KEY_ADC_BACK))  ? 0 : 1; }
+/* 原始键码（1~16），无键返0；计算器/时间设置等全键页面用 */
+uint8_t Key_GetRawKey(void)      { return Key_Hold; }
 
 /* ================= 编码器（实验箱无，空实现） ================= */
 void Encoder_Init(void)     {}
