@@ -1558,6 +1558,13 @@ void RunFadeOut(void){
 			ResetFadeOutFlag();
 			// 使能编码器
 			Encoder_Enable();
+			// 同步按键状态：淡出期间跳过的"松开沿"在页面切换后会被误判为新按键
+			// （如时间页选"确定"返回主菜单后，Enter 松开沿误触发重新进入子页面）
+			OLED_UI_Key.Enter = Key_GetEnterStatus();
+			OLED_UI_Key.Back  = Key_GetBackStatus();
+			OLED_UI_Key.Up    = Key_GetUpStatus();
+			OLED_UI_Key.Down  = Key_GetDownStatus();
+			OLED_UI_LastKey   = OLED_UI_Key;
 		}
 		else{					//步骤1-5：渐隐中
 			OLED_UI_FadeOut_Masking(FadeOut_x0, FadeOut_y0, FadeOut_width, FadeOut_height, FadeOut_Seq);

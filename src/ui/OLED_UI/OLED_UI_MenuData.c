@@ -132,17 +132,17 @@ static void TimeAuxFunc(void)
     if(Ts_Editing == 0){
         /* 显示模式：日期行（12x12 汉字 + 6x8 数字）+ 8x16 大时钟 + 底部提示 */
         RTC_GetTime(&now);
-        wpx = CalcStringWidth(OLED_12X12_FULL, OLED_6X8_HALF, "%04d年%02d月%02d日 周",
+        wpx = CalcStringWidth(OLED_12X12_FULL, OLED_7X12_HALF, "%04d年%02d月%02d日 周",
             (int)now.year, (int)now.month, (int)now.day);
-        OLED_PrintfMix((128 - wpx - 12) / 2, 4, OLED_12X12_FULL, OLED_6X8_HALF,
+        OLED_PrintfMix((128 - wpx) / 2, 10, OLED_12X12_FULL, OLED_7X12_HALF,
             "%04d年%02d月%02d日 周%s", (int)now.year, (int)now.month, (int)now.day,
             ClockWeekStr[Cal_Weekday(now.year, now.month, now.day) - 1]);
         OLED_Printf(32, 22, OLED_8X16_HALF, "%02d:%02d:%02d",
             (int)now.hour, (int)now.minute, (int)now.second);
         /* 底部二选一选项：确定/编辑（上/下切换，反色框指示，确定键执行） */
         OLED_ShowMixString(34, 50, "确定  编辑", OLED_12X12_FULL, OLED_6X8_HALF);
-        if(Ts_Choice == 0) OLED_ReverseArea(34, 50, 12, 12);        /* 确定 */
-        else               OLED_ReverseArea(58, 50, 12, 12);        /* 编辑 */
+        if(Ts_Choice == 0) OLED_ReverseArea(34, 50, 24, 12);        /* 确定（两字 24px） */
+        else               OLED_ReverseArea(70, 50, 24, 12);        /* 编辑（两字 24px） */
         return;
     }
 
@@ -164,9 +164,6 @@ static void TimeAuxFunc(void)
         case 4: x = 57;  OLED_ReverseArea(x, 36, 14, 12); break;   /* 分 */
         case 5: x = 78;  OLED_ReverseArea(x, 36, 14, 12); break;   /* 秒 */
     }
-
-    /* 底部操作提示（纯 ASCII 6x8；保存失败时被诊断行覆盖） */
-    OLED_ShowString(22, 52, "1/2=CHG 3=NEXT 4=SAVE", OLED_6X8_HALF);
 
     /* 保存失败诊断：底部 6x8 "EEP S1 B3 05>FF"（阶段/字节/期望>读回），3 秒后退出编辑 */
     if(Ts_NeedExit){
