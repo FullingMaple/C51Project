@@ -94,21 +94,23 @@ static void TimeSetAuxFunc(void)
     }
     Ts_LastKey = k;
 
-    /* 绘制：年月日（12x12 中文 + 6x8 数字）+ 时分秒（8x16） */
-    OLED_PrintfMix(22, 8, OLED_12X12_FULL, OLED_6X8_HALF, "%04d年%02d月%02d日",
-        Ts_Edit.year, Ts_Edit.month, Ts_Edit.day);
-    OLED_Printf(32, 24, OLED_8X16_HALF, "%02d:%02d:%02d",
-        Ts_Edit.hour, Ts_Edit.minute, Ts_Edit.second);
-    OLED_ShowString(8, 44, "1/2=CHG 3=NEXT 4=SAVE", OLED_6X8_HALF);   /* 纯 ASCII（6x8 无中文） */
+    /* 绘制：日期行（12x12 汉字 + 7x12 数字）与时间行（7x12）统一字号、水平居中
+     * 布局：日期 "2026年08月18日" 宽 92 → x=18；时间 "08:16:35" 宽 56 → x=36
+     * 注意：变参 printf 中 uint8_t 按 1 字节压栈而 %d 读 2 字节会粘连，
+     *       必须 (int) 强转（C51 经典坑） */
+    OLED_PrintfMix(18, 18, OLED_12X12_FULL, OLED_7X12_HALF, "%04d年%02d月%02d日",
+        (int)Ts_Edit.year, (int)Ts_Edit.month, (int)Ts_Edit.day);
+    OLED_Printf(36, 36, OLED_7X12_HALF, "%02d:%02d:%02d",
+        (int)Ts_Edit.hour, (int)Ts_Edit.minute, (int)Ts_Edit.second);
 
-    /* 选中字段反色 */
+    /* 选中字段反色（与两行格子精确对齐） */
     switch(Ts_Field){
-        case 0: x = 22;  OLED_ReverseArea(x, 8, 24, 12); break;   /* 年 */
-        case 1: x = 58;  OLED_ReverseArea(x, 8, 12, 12); break;   /* 月 */
-        case 2: x = 82;  OLED_ReverseArea(x, 8, 12, 12); break;   /* 日 */
-        case 3: x = 32;  OLED_ReverseArea(x, 24, 16, 16); break;  /* 时 */
-        case 4: x = 56;  OLED_ReverseArea(x, 24, 16, 16); break;  /* 分 */
-        case 5: x = 80;  OLED_ReverseArea(x, 24, 16, 16); break;  /* 秒 */
+        case 0: x = 18;  OLED_ReverseArea(x, 18, 28, 12); break;   /* 年 "2026" 28px */
+        case 1: x = 58;  OLED_ReverseArea(x, 18, 14, 12); break;   /* 月 */
+        case 2: x = 84;  OLED_ReverseArea(x, 18, 14, 12); break;   /* 日 */
+        case 3: x = 36;  OLED_ReverseArea(x, 36, 14, 12); break;   /* 时 */
+        case 4: x = 57;  OLED_ReverseArea(x, 36, 14, 12); break;   /* 分 */
+        case 5: x = 78;  OLED_ReverseArea(x, 36, 14, 12); break;   /* 秒 */
     }
 }
 
@@ -139,9 +141,10 @@ static void ClockAuxFunc(void)
     RTC_GetTime(&t);
 
     /* 日期行：2026年08月18日 周二（12x12 中文 + 6x8 数字，居中） */
-    wpx = CalcStringWidth(OLED_12X12_FULL, OLED_6X8_HALF, "%04d年%02d月%02d日 周");
+    wpx = CalcStringWidth(OLED_12X12_FULL, OLED_6X8_HALF, "%04d年%02d月%02d日 周",
+        (int)t.year, (int)t.month, (int)t.day);
     OLED_PrintfMix((128 - wpx - 12) / 2, 0, OLED_12X12_FULL, OLED_6X8_HALF,
-        "%04d年%02d月%02d日 周%s", t.year, t.month, t.day,
+        "%04d年%02d月%02d日 周%s", (int)t.year, (int)t.month, (int)t.day,
         ClockWeekStr[Cal_Weekday(t.year, t.month, t.day) - 1]);
 
     /* 表头：日 一 二 三 四 五 六（逐字，与日历格同 13px 节距→完全对齐） */

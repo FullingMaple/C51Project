@@ -110,7 +110,7 @@ void OLED_UI_ShowClock(void)
         last_h = t.hour;
         last_m = t.minute;
         last_s = t.second;
-        OLED_Printf(0, 0, OLED_6X8_HALF, "%02d:%02d:%02d", t.hour, t.minute, t.second);
+        OLED_Printf(0, 0, OLED_6X8_HALF, "%02d:%02d:%02d", (int)t.hour, (int)t.minute, (int)t.second);   /* uint8_t 需 (int) 强转，防变参粘连 */
     }
 }
 /**
