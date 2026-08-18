@@ -20,7 +20,8 @@
 static void IAP_Enable(void)
 {
     EA = 0;   /* IAP 操作期间必须关总中断：0x5A/0xA5 触发序列被中断插入会导致触发失败 */
-    IAP_CONTR = IAP_EN | (MAIN_Fosc / 1000000);   /* TPS = 主频 MHz */
+    IAP_CONTR = IAP_EN;                             /* 使能 IAP（STC8H 的 IAP_CONTR 无 TPS 位，只置 bit7） */
+    IAP_TPS = (uint8_t)(MAIN_Fosc / 1000000);       /* 等待参数 = 主频 MHz（STC8H 独立寄存器 0xF5，必须设置！） */
 }
 
 static void IAP_Disable(void)
