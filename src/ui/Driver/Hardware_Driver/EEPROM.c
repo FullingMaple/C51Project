@@ -10,12 +10,11 @@
 
 #define IAP_EN          (1 << 7)    /* IAP_CONTR 使能位 */
 
-/* EEPROM 区基址（IAP 绝对地址）：
- * STC8H 的 IAP 地址 = 程序空间绝对地址（非 EEPROM 区偏移）！
- * 出厂 EEPROM 0.5K 位于 flash 末尾：0x10000 - 0x200 = 0xFE00
- * 注意：用 0x0000 会擦/写程序区（中断向量表所在）→ 程序被毁卡死+蜂鸣长鸣
- * 若 ISP 下载时将 EEPROM 大小改为 N K，基址 = 0x10000 - N*1024 */
-#define EEPROM_BASE     0xFE00
+/* EEPROM 区基址：STC8H 的 IAP 地址 = EEPROM 区偏移（从 0000H 开始，
+ * 与 STC15 等"加程序区偏移"不同——官方手册明确"不需要加偏移量"）
+ * 注意：地址填 EEPROM 区外的值（如 0xFE00）会被 IAP 忽略，
+ *       擦/写无效、读回 0x00——表现为写后读回校验失败 */
+#define EEPROM_BASE     0x0000
 
 static void IAP_Enable(void)
 {
