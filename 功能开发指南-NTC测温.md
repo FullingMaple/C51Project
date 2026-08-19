@@ -8,18 +8,14 @@
 
 ## 开工指引（第一次拿到项目，照做）
 
-1. **clone 仓库**（VSCode 终端）：
-   ```bash
-   git clone https://github.com/FullingMaple/C51Project.git
-   cd C51Project
-   ```
-2. **切到自己的分支**（你是 NTC 负责人）：
+1. 用VsCode打开项目文件夹
+2. **切到自己的分支**（你是 NTC 负责人）：（交给AI）
    ```bash
    git checkout feature/ntc
    ```
 3. **读本指南**：§0（工作方式 + 分支铁律 + Skill 用法）→ §2（环境速通）
 4. **开工**：跑 `/c51-intellisense` + `/setup-matt-pocock-skills`（Skill 见 §0）→ 按 §2 切虚拟屏 → 给 AI 任务书（§4）
-5. **完成**：验证清单全过 → 推分支 → 通知主开发合入：
+5. **完成**：验证清单全过 → 推分支 → 通知主开发合入：（交给AI）
    ```bash
    git push origin feature/ntc
    ```
@@ -91,7 +87,7 @@ git checkout feature/ntc
 | 显示 | 虚拟 OLED 屏（VIRTUAL_OLED=1，画面在 STC-ISP 窗口里） |
 | 验收 | 见 §6 验证清单（8 项全过） |
 
-**你只允许改动 2 个文件**（其余文件一律不许动！）：
+**你只允许改动 2 个文件**（其余文件一律不许动！必要的测试脚本除外）：
 
 | 文件 | 改动 |
 |---|---|

@@ -261,6 +261,16 @@
 - **python 写 GBK 铁律再补一条**：`open(F,'wb').write(txt.encode('gbk'))` 若 encode 抛异常，open 已截断文件 → **先 `out = txt.encode('gbk')` 成功后再 open**（MenuData.c 曾因此变空，git checkout 找回）
 - **蜂鸣长鸣 = 中断停**（Buzzer_Tick 在 Timer0 内）：长鸣必是 EA 未恢复或向量表被毁，短鸣恢复正常
 
+### 周几"三"显示缺失调试链（2026-08-19，已解决）
+
+**现象**：时间页周几"三"不显示（"周三"只见"周"），其余周数正常——"三"字模/Index/条目字节/python 模拟绘制全部验证正确，逻辑层无问题，纯 C51 运行时路径问题（OLED_ShowChinese 查表 + 指针）。
+
+**教训**：
+1. **"一个字符异常"先排除数据**：字模重新渲染对比（render==old）、GBK Index 字节、条目格式、gcc/python 完整模拟绘制——数据层全对才怀疑运行时
+2. **python 模拟 OLED_ShowImage 取模**（页主序 `Image[j*Width+i]` + `<< (currY%8)` 跨页拆分）可完整验证 12×12 绘制逻辑
+3. **终极解法：内联字模**——7 个周几字模提取为 `code` 数组 + `OLED_ShowImage` 直接绘制（`Time_DrawWeekday`），绕开运行时查表/指针，100% 可控。**凡遇"某个字符在 C51 运行时异常"且数据验证无误，优先内联直画**
+4. **OLED_ShowImage 自带 ClearArea**（绘制前清空区域）——多字拼接绘制时注意区域边界（曾致"周"与周几重叠互吃，x 偏移补 12px 解决）
+
 ### 测试与工具
 
 - `tests/test_calendar_layout.c`：日历网格定位（13px 节距/居中/6 行溢出，全月型边界扫描）
