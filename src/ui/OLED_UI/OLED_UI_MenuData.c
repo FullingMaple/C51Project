@@ -39,8 +39,7 @@ MenuItem MainMenuItems[] = {
 /* ================= 设置页 ================= */
 MenuItem SettingsMenuItems[] = {
     {"深浅色", NULL,              NULL, &ColorMode,         NULL, NULL, NULL, NULL, 0, 0},
-    {"显示帧率", NULL,            NULL, &OLED_UI_FpsShow,   NULL, NULL, NULL, NULL, 0, 0},
-    {"语言",   NULL,              NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
+    {"帧率",   NULL,              NULL, &OLED_UI_FpsShow,   NULL, NULL, NULL, NULL, 0, 0},
     {"提示音", NULL,              NULL, &SoundEnable, NULL, NULL, NULL, NULL, 0, 0},
     {"[返回]", OLED_UI_Back,      NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
     {NULL}
@@ -52,7 +51,6 @@ MenuItem AboutThisDeviceMenuItems[] = {
     {" MCU: STC8H8K64U", NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
     {" 屏: 0.96 SSD1306",  NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
     {" 框架: OLED_UI",    NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
-    {" 许可: Apache 2.0",       NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
     {"[返回]", OLED_UI_Back,    NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
     {NULL}
 };
