@@ -132,8 +132,9 @@ static void TimeAuxFunc(void)
     if(Ts_Editing == 0){
         /* 显示模式：日期行（12x12 汉字 + 6x8 数字）+ 8x16 大时钟 + 底部提示 */
         RTC_GetTime(&now);
-        wpx = CalcStringWidth(OLED_12X12_FULL, OLED_7X12_HALF, "%04d年%02d月%02d日 周",
-            (int)now.year, (int)now.month, (int)now.day);
+        wpx = CalcStringWidth(OLED_12X12_FULL, OLED_7X12_HALF, "%04d年%02d月%02d日 周%s",
+            (int)now.year, (int)now.month, (int)now.day,
+            ClockWeekStr[Cal_Weekday(now.year, now.month, now.day) - 1]);
         OLED_PrintfMix((128 - wpx) / 2, 10, OLED_12X12_FULL, OLED_7X12_HALF,
             "%04d年%02d月%02d日 周%s", (int)now.year, (int)now.month, (int)now.day,
             ClockWeekStr[Cal_Weekday(now.year, now.month, now.day) - 1]);
