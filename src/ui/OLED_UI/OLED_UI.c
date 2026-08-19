@@ -1611,13 +1611,6 @@ void MoveMenuElements(void){
 	//设置颜色模式
 	OLED_SetColorMode(ColorMode);
 
-	ChangeDistance(&OLED_UI_ProbWidth);
-	// 改变窗口参数
-	ChangeArea(&OLED_UI_Window);
-	// 绘制窗口
-	OLED_DrawWindow();
-
-	
 	
 }
 
@@ -1646,7 +1639,6 @@ static bool OLED_UI_IsStaticIdle(void)
     if(CurrentMenuPage == &ClockMenuPage) return false;
     if(FadeOutFlag != FLAGEND) return false;        /* 渐隐动画中 */
     if(KeyEnterFlag != FLAGEND) return false;       /* 进入事件处理中 */
-    if(CurrentWindow != NULL) return false;         /* 窗口组件打开（进度条动画） */
 
     /* 光标/选择框动画是否到位（光标框位置是 ChangeArea 动画，漏查会导致按键只动一帧） */
     dx = OLED_UI_Cursor.CurrentArea.X - OLED_UI_Cursor.TargetArea.X;
@@ -1722,29 +1714,7 @@ void OLED_UI_InterruptHandler(void){
 		MenuID_Type IncreaseID;   /* C51: 声明与赋值分离（C248）*/
 		IncreaseID = OLED_KeyAndEncoderRecord();
 
-		//如果窗口停留的标志位为true，说明当前正在运行窗口
-		if(OLED_SustainCounter.SustainFlag == true){
-			int8_t DataStyle;   /* 块内声明提升 */
-			//如果编码器或是按键的变化值不是0
-			if(IncreaseID.Unsafe != 0){
-				//窗口计数值清零
-				OLED_SustainCounter.count = 0;
-			}
-		//如果窗口有数据
-		DataStyle = GetWindowDataStyle(CurrentWindow->Prob_Data_Int,CurrentWindow->Prob_Data_Float);
-			if(DataStyle != WINDOW_DATA_STYLE_NONE){
-				if(DataStyle == WINDOW_DATA_STYLE_INT){
-					*CurrentWindow->Prob_Data_Int += (IncreaseID.Unsafe * CurrentWindow->Prob_DataStep);
-					if(*CurrentWindow->Prob_Data_Int < CurrentWindow->Prob_MinData) {*CurrentWindow->Prob_Data_Int = CurrentWindow->Prob_MinData;}
-					if(*CurrentWindow->Prob_Data_Int > CurrentWindow->Prob_MaxData) {*CurrentWindow->Prob_Data_Int = CurrentWindow->Prob_MaxData;}
-				}else{
-					*CurrentWindow->Prob_Data_Float += (IncreaseID.Unsafe * CurrentWindow->Prob_DataStep);
-					if(*CurrentWindow->Prob_Data_Float < CurrentWindow->Prob_MinData) {*CurrentWindow->Prob_Data_Float = CurrentWindow->Prob_MinData;}
-					if(*CurrentWindow->Prob_Data_Float > CurrentWindow->Prob_MaxData) {*CurrentWindow->Prob_Data_Float = CurrentWindow->Prob_MaxData;}
-				}
-			}
-			IncreaseID.Safe = 0;
-		}
+
 		 
 		//如果变化值小于0，那么相当于按下IncreaseID.Safe次【上】按键
 		if(IncreaseID.Safe < 0 ){
@@ -1802,38 +1772,18 @@ void OLED_UI_InterruptHandler(void){
     	
 		//如果检测到【返回】按键的上一状态与这次的状态不同，且这一状态是抬起状态，说明用户按下了【返回】按键，并且刚刚才抬起
 		if(OLED_UI_Key.Back != OLED_UI_LastKey.Back && OLED_UI_Key.Back == 1){
-			//如果当前没有运行窗口
-			if(OLED_SustainCounter.SustainFlag == false){
-				BackEventMenuItem();
-			}else{
-				OLED_SustainCounter.count = (int16_t)(CurrentWindow->General_ContinueTime * 50);
-			}
-			
-		}
+			BackEventMenuItem();
 		//如果检测到【确认】按键的上一状态与这次的状态不同，且这一状态是抬起状态，说明用户按下了【确认】按键，并且刚刚才抬起
 		if(OLED_UI_Key.Enter != OLED_UI_LastKey.Enter && OLED_UI_Key.Enter == 1){
-			if(OLED_SustainCounter.SustainFlag == false){
-				EnterEventMenuItem();
-				if (CurrentMenuPage->General_MenuItems[CurrentMenuPage->_ActiveMenuID].List_BoolRadioBox != NULL) {
-				    *CurrentMenuPage->General_MenuItems[CurrentMenuPage->_ActiveMenuID].List_BoolRadioBox = !(*CurrentMenuPage->General_MenuItems[CurrentMenuPage->_ActiveMenuID].List_BoolRadioBox);
-				    SetEnterFlag();   /* 开关翻转后强制重绘一帧立即生效（否则静态跳过不刷新画面） */
-				}
-			}else{
-				OLED_SustainCounter.count = 0;
+			EnterEventMenuItem();
+			if (CurrentMenuPage->General_MenuItems[CurrentMenuPage->_ActiveMenuID].List_BoolRadioBox != NULL) {
+			    *CurrentMenuPage->General_MenuItems[CurrentMenuPage->_ActiveMenuID].List_BoolRadioBox = !(*CurrentMenuPage->General_MenuItems[CurrentMenuPage->_ActiveMenuID].List_BoolRadioBox);
+			    SetEnterFlag();   /* 开关翻转后强制重绘一帧立即生效（否则静态跳过不刷新画面） */
 			}
 		}
-		
-	}
-
-	//如果当前正在运行窗口，那么计数
-	if(OLED_SustainCounter.SustainFlag == true){
-		OLED_SustainCounter.count++;
-	}
-	if(CurrentWindow != NULL){
-		if(OLED_SustainCounter.count >= (int16_t)(CurrentWindow->General_ContinueTime * 50)){
-			OLED_SustainCounter.SustainFlag = false;
-			OLED_SustainCounter.count = 0;
-		}
+			
 	}
 }
+}
+
 #endif
