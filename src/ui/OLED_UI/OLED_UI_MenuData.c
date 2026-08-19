@@ -136,7 +136,7 @@ static void TimeAuxFunc(void)
         if(wd < 1 || wd > 7) wd = 1;                          /* 防御：非法值兜底 */
         OLED_PrintfMix(3, 10, OLED_12X12_FULL, OLED_7X12_HALF, "%04d年%02d月%02d日 周",
             (int)now.year, (int)now.month, (int)now.day);
-        OLED_ShowChinese(3 + 98, 10, (char *)ClockWeekStr[wd - 1], OLED_12X12_FULL);   /* 周几直画，不走 %s */
+        OLED_ShowChinese(3 + 98 + 12, 10, (char *)ClockWeekStr[wd - 1], OLED_12X12_FULL);   /* 周(101..113) 之后 */   /* 周几直画，不走 %s */
         OLED_Printf(32, 22, OLED_8X16_HALF, "%02d:%02d:%02d",
             (int)now.hour, (int)now.minute, (int)now.second);
         /* 底部二选一选项：确定/编辑（上/下切换，反色框指示，确定键执行） */
@@ -154,7 +154,7 @@ static void TimeAuxFunc(void)
     if(wd < 1 || wd > 7) wd = 1;                              /* 防御：非法值兜底 */
     OLED_PrintfMix(3, 18, OLED_12X12_FULL, OLED_7X12_HALF, "%04d年%02d月%02d日 周",
         (int)Ts_Edit.year, (int)Ts_Edit.month, (int)Ts_Edit.day);
-    OLED_ShowChinese(3 + 98, 18, (char *)ClockWeekStr[wd - 1], OLED_12X12_FULL);       /* 周几直画，不走 %s */
+    OLED_ShowChinese(3 + 98 + 12, 18, (char *)ClockWeekStr[wd - 1], OLED_12X12_FULL);   /* 周(101..113) 之后 */       /* 周几直画，不走 %s */
     OLED_Printf(36, 36, OLED_7X12_HALF, "%02d:%02d:%02d",
         (int)Ts_Edit.hour, (int)Ts_Edit.minute, (int)Ts_Edit.second);
 
