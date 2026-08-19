@@ -130,7 +130,7 @@ static void TimeAuxFunc(void)
     Ts_LastKey = k;
 
     if(Ts_Editing == 0){
-        /* 显示模式：日期行（12x12 汉字 + 6x8 数字）+ 8x16 大时钟 + 底部提示 */
+        /* 显示模式：日期行（12x12 汉字 + 7x12 数字）+ 8x16 大时钟 + 底部提示 */
         RTC_GetTime(&now);
         wpx = CalcStringWidth(OLED_12X12_FULL, OLED_7X12_HALF, "%04d年%02d月%02d日 周%s",
             (int)now.year, (int)now.month, (int)now.day,
@@ -151,16 +151,17 @@ static void TimeAuxFunc(void)
      * 注意：变参 printf 中 uint8_t 按 1 字节压栈而 %d 读 2 字节会粘连，
      *       必须 (int) 强转（C51 经典坑） */
     OLED_ShowMixString(40, 2, "时间设置", OLED_12X12_FULL, OLED_6X8_HALF);
-    OLED_PrintfMix(18, 18, OLED_12X12_FULL, OLED_7X12_HALF, "%04d年%02d月%02d日",
-        (int)Ts_Edit.year, (int)Ts_Edit.month, (int)Ts_Edit.day);
+    OLED_PrintfMix(9, 18, OLED_12X12_FULL, OLED_7X12_HALF, "%04d年%02d月%02d日 周%s",
+        (int)Ts_Edit.year, (int)Ts_Edit.month, (int)Ts_Edit.day,
+        ClockWeekStr[Cal_Weekday(Ts_Edit.year, Ts_Edit.month, Ts_Edit.day) - 1]);
     OLED_Printf(36, 36, OLED_7X12_HALF, "%02d:%02d:%02d",
         (int)Ts_Edit.hour, (int)Ts_Edit.minute, (int)Ts_Edit.second);
 
     /* 选中字段反色（与两行格子精确对齐） */
     switch(Ts_Field){
-        case 0: x = 18;  OLED_ReverseArea(x, 18, 28, 12); break;   /* 年 "2026" 28px */
-        case 1: x = 58;  OLED_ReverseArea(x, 18, 14, 12); break;   /* 月 */
-        case 2: x = 84;  OLED_ReverseArea(x, 18, 14, 12); break;   /* 日 */
+        case 0: x = 9;   OLED_ReverseArea(x, 18, 28, 12); break;   /* 年 "2026" 28px */
+        case 1: x = 49;  OLED_ReverseArea(x, 18, 14, 12); break;   /* 月 */
+        case 2: x = 75;  OLED_ReverseArea(x, 18, 14, 12); break;   /* 日 */
         case 3: x = 36;  OLED_ReverseArea(x, 36, 14, 12); break;   /* 时 */
         case 4: x = 57;  OLED_ReverseArea(x, 36, 14, 12); break;   /* 分 */
         case 5: x = 78;  OLED_ReverseArea(x, 36, 14, 12); break;   /* 秒 */
