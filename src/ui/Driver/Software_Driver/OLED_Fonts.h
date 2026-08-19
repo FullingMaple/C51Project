@@ -44,7 +44,6 @@ extern code ChineseCell8x8_t OLED_CF8x8[];  // 声明12x12字模数组
 extern code uint8_t Arrow[];
 extern code uint8_t Arrow1[];
 extern code uint8_t UnKnown[];
-extern code uint8_t Image_calendar[];
 extern code uint8_t Image_serial[];
 extern code uint8_t Image_gamepad[];
 extern code uint8_t Image_calc2[];
