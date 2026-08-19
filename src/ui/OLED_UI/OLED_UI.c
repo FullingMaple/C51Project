@@ -1773,6 +1773,7 @@ void OLED_UI_InterruptHandler(void){
 		//如果检测到【返回】按键的上一状态与这次的状态不同，且这一状态是抬起状态，说明用户按下了【返回】按键，并且刚刚才抬起
 		if(OLED_UI_Key.Back != OLED_UI_LastKey.Back && OLED_UI_Key.Back == 1){
 			BackEventMenuItem();
+		}
 		//如果检测到【确认】按键的上一状态与这次的状态不同，且这一状态是抬起状态，说明用户按下了【确认】按键，并且刚刚才抬起
 		if(OLED_UI_Key.Enter != OLED_UI_LastKey.Enter && OLED_UI_Key.Enter == 1){
 			EnterEventMenuItem();
@@ -1783,7 +1784,6 @@ void OLED_UI_InterruptHandler(void){
 		}
 			
 	}
-}
 }
 
 #endif
