@@ -276,12 +276,12 @@ git checkout feature/ntc
 每次构建看 `Program Size`：
 
 ```
-Program Size: data=15.5  xdata=3808  const=6528  code=42760
+Program Size: data=15.5  xdata=3892  const=6939  code=39767
 ```
 
-- `code`：Flash 程序 + 常量。当前 42760（48.1KB/64KB），**测温功能完成后应在 44500 以内**（预计 +1.7KB 左右）
-- `xdata`：RAM。当前 3808/8192，测温页只加几个全局变量（<50B）
-- 超限（code > 63000 或 xdata > 8100）→ 立即告诉主开发
+- `code`：Flash 程序 + 常量。当前 39767（+const 6939 = 45.6KB/64KB，剩 ~18.4KB），**测温功能完成后应在 41500 以内**（预计 +1.7KB 左右）
+- `xdata`：RAM。当前 3892/8192，测温页只加几个全局变量（<50B）
+- 超限（code > 64000 或 xdata > 8100）→ 立即告诉主开发（预算已大幅放宽，但仍需留余量）
 
 ---
 

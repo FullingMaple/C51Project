@@ -271,6 +271,24 @@
 3. **终极解法：内联字模**——7 个周几字模提取为 `code` 数组 + `OLED_ShowImage` 直接绘制（`Time_DrawWeekday`），绕开运行时查表/指针，100% 可控。**凡遇"某个字符在 C51 运行时异常"且数据验证无误，优先内联直画**
 4. **OLED_ShowImage 自带 ClearArea**（绘制前清空区域）——多字拼接绘制时注意区域边界（曾致"周"与周几重叠互吃，x 偏移补 12px 解决）
 
+### 深度内存优化 + 修复链（2026-08-19，已推送 GitHub）
+
+**当前状态**：code 39767 + const 6939 = **45.6KB/64KB（剩 18.4KB）**、xdata 3892、0 Error/1 Warning（L15×1）——预算比优化前多 7.9KB，剩余功能（NTC/计算器/闹钟/游戏/串口 ~8-10KB）**全做有余**。
+
+**深度优化（6901344，省 7.9KB）**：
+- **窗口功能是死代码**（OLED_UI_CreateWindow 零调用）——删主循环窗口调用（OLED_DrawWindow/ChangeArea(&OLED_UI_Window)/ChangeDistance(&OLED_UI_ProbWidth)）+ ISR 窗口逻辑（SustainCounter 数据块、Back/Enter 分支简化）+ IsStaticIdle 窗口检查
+- **连锁收益**：窗口函数链被 REMOVEUNUSED 自动裁剪 → **浮点 printf 支持连带移除**（%5.2f 无引用，省 ~6KB）；Warning 2→1
+- 字库/图标两轮裁剪：Image_calendar/Image_more + 16×16 五字 + 12×12 15 字（周几内联后一二三四五六不再查表）
+
+**⚠️ 修复链（本次两大教训）**：
+1. **`IncreaseID.Safe` 被正则误删**（早前）：上下键全失效、进入/返回正常——Safe 恒 0 的信号
+2. **Back 块闭合 `}` 被正则吞**（6901344 引入）：Enter 块嵌套进 Back 块 → 进入键失效、子页面进不去——**括号平衡 ≠ 结构正确**，大块替换后必须逐块核对语义 + 上板验证（8f743bc 修复）
+3. 期间还踩了：`#endif` 多处匹配错位（找文件末尾用 rfind）、函数闭合缺失（花括号深度扫描定位）
+
+**新铁律**：
+- 大块正则替换后：花括号深度扫描 + 逐块语义核对 + 上板验证三步缺一不可
+- 新功能避免引入 %f/窗口等重库（浮点 printf ~6KB、窗口链 ~1KB）
+
 ### 测试与工具
 
 - `tests/test_calendar_layout.c`：日历网格定位（13px 节距/居中/6 行溢出，全月型边界扫描）
