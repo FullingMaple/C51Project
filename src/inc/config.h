@@ -16,7 +16,7 @@
  *     开发期无实体屏调试全部 UI 逻辑；帧率数字失真，性能须实体屏验证
  * 0 = 实体 OLED（软件 I2C，SSD1306，SCL=P2.5 / SDA=P2.4 / 0x78）
  */
-#define VIRTUAL_OLED    0
+#define VIRTUAL_OLED    1
 
 /* 实体 OLED 接口选择：
  * OLED_IF_SPI = 1 → SPI（SCLK=P2.5 MOSI=P2.3 RES=P2.4 DC=P3.4 CS=P1.1，
