@@ -27,7 +27,6 @@ static void SettingAuxFunc(void){}
 /* ================= 磁贴主屏菜单项 ================= */
 MenuItem MainMenuItems[] = {
     {"设置",   NULL, &SettingsMenuPage,        NULL, NULL, NULL, Image_gear,      NULL, 0, 0},
-    {"关于",   NULL, &AboutThisDeviceMenuPage, NULL, NULL, NULL, Image_more,         NULL, 0, 0},
     {"时间",   NULL, &ClockMenuPage,         NULL, NULL, NULL, Image_clock,       NULL, 0, 0},
     {"测温",   NULL, NULL,                     NULL, NULL, NULL, Image_thermo,       NULL, 0, 0},
     {"串口",   NULL, NULL,                     NULL, NULL, NULL, Image_serial,       NULL, 0, 0},
@@ -41,6 +40,7 @@ MenuItem SettingsMenuItems[] = {
     {"深浅色", NULL,              NULL, &ColorMode,         NULL, NULL, NULL, NULL, 0, 0},
     {"帧率",   NULL,              NULL, &OLED_UI_FpsShow,   NULL, NULL, NULL, NULL, 0, 0},
     {"提示音", NULL,              NULL, &SoundEnable, NULL, NULL, NULL, NULL, 0, 0},
+    {"关于",   NULL, &AboutThisDeviceMenuPage, NULL, NULL, NULL, NULL, NULL, 0, 0},
     {"[返回]", OLED_UI_Back,      NULL, NULL, NULL, NULL, NULL, NULL, 0, 0},
     {NULL}
 };

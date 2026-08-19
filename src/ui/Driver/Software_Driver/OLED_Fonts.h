@@ -50,7 +50,6 @@ extern code uint8_t Image_calc2[];
 extern code uint8_t Image_thermo[];
 extern code uint8_t Image_clock[];
 extern code uint8_t Image_gear[];
-extern code uint8_t Image_more[];
 /*按照上面的格式，在这个位置加入新的图像数据声明*/
 //...
 
