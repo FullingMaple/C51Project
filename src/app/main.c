@@ -12,6 +12,7 @@
 #include "IR_Remote.h"
 #include "RTC.h"
 #include "EEPROM.h"
+#include "stc32_stc8_usb.h"   /* usb_init() —— 实体屏模式串口通信 */
 
 /* USB-CDC 库要求实现的 STC-ISP 用户命令接口（弱符号） */
 char *USER_STCISPCMD = "@STCISP#";
@@ -28,6 +29,10 @@ void System_Init(void)
     OLED_IO_MODE();             /* P2.2~P2.5 开漏 + 实验箱外部上拉 */
 
     OLED_Init();                /* 双后端：虚拟 USB-CDC / 实体硬件 I2C */
+#if !VIRTUAL_OLED
+    usb_init();             /* 实体屏模式：USB-CDC 作虚拟串口（虚拟屏模式在 OLED_Init 内已调） */
+    Serial_Init();          /* 串口接收环形缓冲清零 */
+#endif
     Buzzer_Init();              /* P5.4 按键音（设置页"提示音"开关） */
     IR_Init();                  /* 红外遥控：P3.5 + T1 100us 采样解码 */
     RTC_Init();                 /* 内部 RTC：外部 32.768K 晶振（万年历/顶部时钟） */

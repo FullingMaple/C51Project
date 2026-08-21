@@ -295,7 +295,7 @@ void OLED_ShadowClear(void)
 /* ================= 刷新 ================= */
 static uint8_t OLED_FrameCounter;   /* 帧计数：周期全刷自愈（I2C 偶发丢字节的残留清理） */
 
-/* 全屏刷新：diff 逐页对比，只发变化的页（列级）；每 50 帧强制全刷一次自愈 */
+/* 全屏刷新：diff 逐页对比，只发变化的页（列级）；每 100 帧强制全刷一次自愈 */
 void OLED_Update(void)
 {
 #if(VIRTUAL_OLED)
@@ -311,7 +311,7 @@ void OLED_Update(void)
     uint8_t page;
     uint8_t force_full;
     OLED_FrameCounter++;
-    force_full = (OLED_FrameCounter >= 50);   /* 每 50 帧（~0.6s）全刷自愈 */
+    force_full = (OLED_FrameCounter >= 100);   /* 每 100 帧（~1.2s）全刷自愈 */
     for(page = 0; page < OLED_PAGES; page++)
     {
         if(force_full || memcmp(OLED_ShadowBuf[page], OLED_DisplayBuf[page], OLED_WIDTH) != 0)

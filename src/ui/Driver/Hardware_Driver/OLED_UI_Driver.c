@@ -15,6 +15,7 @@
 #include "stc8h.h"
 #include "intrins.h"
 #include "IR_Remote.h"
+#include "stc32_stc8_usb.h"   /* USB-CDC 库：串口通信收发 */
 
 /* ================= 系统 tick（20ms 节拍 ×20 = 1ms） ================= */
 static volatile uint32_t TickCounter;      /* 20ms 计数 */
@@ -28,6 +29,63 @@ uint32_t GetTick(void)
 {
     return TickCounter * 20;
 }
+
+/* ================= 串口通信：USB-CDC 接收引擎 =================
+ * 实体屏模式(VIRTUAL_OLED=0)下专用：USB-CDC 通道作虚拟串口收发。
+ * 接收：usb_OUT_callback() 在 USB ISR 内把 64B 包搬进接收环形缓冲；
+ *       应用层(串口页 AuxFunc) 每帧轮询 Serial_GetByte() 取出显示。
+ * 缓冲：xdata 256B 环形队列，单生产者(ISR 写)单消费者(主循环读)，无需关中断。
+ * 回显：本功能不做（Q2 定案）；若启用用 USB_SendData，仅实体屏模式。
+ * 设计：Q1(b)仅显示 / Q3(b)中断回调 / Q4(a)xdata256 / Q8(a)退出继续收 */
+#if !VIRTUAL_OLED
+
+#define SERIAL_RX_SIZE  256
+uint8_t xdata Serial_RxBuf[SERIAL_RX_SIZE];  /* 接收环形缓冲 */
+volatile uint8_t Serial_RxHead = 0;          /* 写指针（ISR 维护） */
+uint8_t Serial_RxTail = 0;                   /* 读指针（主循环维护） */
+volatile uint16_t Serial_RxTotal = 0;        /* 累计接收字节计数（状态行显示） */
+
+/* USB OUT 端点回调：USB ISR 收到一包 PC→MCU 数据时调用。
+ * 把 UsbOutBuffer[0..OutNumber-1] 逐字节搬进环形缓冲；满则覆盖最旧（Q8）。 */
+BOOL usb_OUT_callback(void)
+{
+    uint8_t i;
+    uint8_t n = OutNumber;
+    for(i = 0; i < n; i++){
+        Serial_RxBuf[Serial_RxHead] = UsbOutBuffer[i];
+        Serial_RxHead = (uint8_t)(Serial_RxHead + 1);   /* uint8_t 自然回绕 256 */
+        Serial_RxTotal++;
+    }
+    return 1;        /* 告知库：本回调已处理数据 */
+}
+
+/* 串口接收初始化：调用前需已 usb_init()。当前无额外硬件初始化，留接口 */
+void Serial_Init(void)
+{
+    Serial_RxHead = 0;
+    Serial_RxTail = 0;
+    Serial_RxTotal = 0;
+}
+
+/* 取一个字节：有数据返回字节值并置 *ok=1，无数据置 *ok=0。
+ * 主循环消费端调用，与 ISR 写端通过 Head/Tail 无锁同步。 */
+uint8_t Serial_GetByte(uint8_t *ok)
+{
+    uint8_t b;
+    if(Serial_RxTail == Serial_RxHead){ *ok = 0; return 0; }   /* 空 */
+    b = Serial_RxBuf[Serial_RxTail];
+    Serial_RxTail = (uint8_t)(Serial_RxTail + 1);
+    *ok = 1;
+    return b;
+}
+
+/* USB 是否已枚举（CONFIGURED）——状态行 + 发送前置判断用 */
+uint8_t Serial_IsConnected(void)
+{
+    return (DeviceState == DEVSTATE_CONFIGURED) ? 1 : 0;
+}
+
+#endif /* !VIRTUAL_OLED */
 
 /* ================= 按键音（P5.4 有源蜂鸣器） =================
  * 电路：P5.4 → 1N5819 → BEEP1 → SYS-VCC——低电平导通响（P5.4=0 响） */

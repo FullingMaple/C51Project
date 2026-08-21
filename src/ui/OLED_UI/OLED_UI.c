@@ -27,6 +27,7 @@ OLED_UI_Counter OLED_FPS = {0,0,0};									//用于存储帧率的结构体
 OLED_Key OLED_UI_Key = {1,1,1,1};   								//用于存储按键状态的结构体,默认没有按下，都为1
 OLED_Key OLED_UI_LastKey = {1,1,1,1};								//用于存储上一轮按键状态的结构体,默认没有按下，都为1
 extern MenuPage ClockMenuPage;   /* 万年历页（顶部时钟跳过用） */
+extern MenuPage SerialMenuPage;   /* 串口页：数据到达需实时刷新 */
 extern MenuPage MainMenuPage;    /* 磁贴主菜单（全局时钟仅在此页显示） */
 MenuPage*  CurrentMenuPage = NULL;									//全局结构体指针，当前页面的指针
 MenuWindow *CurrentWindow = NULL;									//全局结构体指针，当前窗口的指针
@@ -1637,6 +1638,7 @@ static bool OLED_UI_IsStaticIdle(void)
 
     /* 实时页（时间页恒重绘：静态跳过会导致时间不刷新） */
     if(CurrentMenuPage == &ClockMenuPage) return false;
+	if(CurrentMenuPage == &SerialMenuPage) return false;   /* 串口页：新字节到达需实时重绘 */
     if(FadeOutFlag != FLAGEND) return false;        /* 渐隐动画中 */
     if(KeyEnterFlag != FLAGEND) return false;       /* 进入事件处理中 */
 
@@ -1665,6 +1667,10 @@ static bool OLED_UI_IsStaticIdle(void)
 }
 
 void OLED_UI_MainLoop(void){
+	/* 帧率限制（动画期）：GetTick 粒度 20ms → 实限 ~50fps，匹配面板 ~100Hz 内刷，
+	 * 消除内容更新超面板刷新率的撕裂/频闪；动画速度恒定不再随主循环空转抖动 */
+	static uint32_t LastAnimTick = 0;   /* 上次动画帧绘制时刻 */
+	uint32_t AnimNow;
 	//清屏
 		/* 帧率优化 Step2：静态空闲时跳过清屏+全量重绘，只刷 FPS（diff 只发变化页）
 	 * ——静态帧率突破 CPU 重绘瓶颈；按键/动画/窗口发生时自动恢复重绘 */
@@ -1673,6 +1679,15 @@ void OLED_UI_MainLoop(void){
 		OLED_UI_ShowClock();
 		OLED_Update();
 		return;
+	}
+	AnimNow = GetTick();
+	/* 限帧仅用于页面滑入动画（全屏内容连续变化，超面板刷新率会撕裂）；
+	 * 渐隐/光标/菜单框为局部或步骤控制的变化，不限帧保持流畅 */
+	if(FadeOutFlag == FLAGEND
+	   && (OLED_UI_PageStartPoint.CurrentPoint.X != OLED_UI_PageStartPoint.TargetPoint.X
+	    || OLED_UI_PageStartPoint.CurrentPoint.Y != OLED_UI_PageStartPoint.TargetPoint.Y)){
+		if (AnimNow - LastAnimTick < 16) return;   /* 限 ~60fps：GetTick 粒度 20ms → 实限 ~50fps */
+		LastAnimTick = AnimNow;
 	}
 	OLED_Clear();
 
