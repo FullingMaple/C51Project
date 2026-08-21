@@ -12,7 +12,6 @@
 #include "timeedit.h"
 #include "calendar.h"   /* Cal_Weekday（显示模式日期行星期） */
 #include "OLED_UI_Driver.h"   /* Buzzer_Beep / Delay_ms（保存失败提示） */
-#include "stc32_stc8_usb.h"   /* USB-CDC serial IO */
 
 extern bool ColorMode;
 extern MenuPage *CurrentMenuPage;   /* 保存失败时屏蔽/恢复框架返回 */
@@ -30,7 +29,7 @@ MenuItem MainMenuItems[] = {
     {"设置",   NULL, &SettingsMenuPage,        NULL, NULL, NULL, Image_gear,      NULL, 0, 0},
     {"时间",   NULL, &ClockMenuPage,         NULL, NULL, NULL, Image_clock,       NULL, 0, 0},
     {"测温",   NULL, NULL,                     NULL, NULL, NULL, Image_thermo,       NULL, 0, 0},
-    {"串口",   NULL, &SerialMenuPage,        NULL, NULL, NULL, Image_serial,       NULL, 0, 0},
+    {"串口",   NULL, NULL,                     NULL, NULL, NULL, Image_serial,       NULL, 0, 0},
     {"计算器", NULL, NULL,                     NULL, NULL, NULL, Image_calc2,        NULL, 0, 0},
     {"游戏",   NULL, NULL,                     NULL, NULL, NULL, Image_gamepad,      NULL, 0, 0},
     {NULL}
@@ -199,126 +198,6 @@ static void TimeAuxFunc(void)
 MenuPage ClockMenuPage = {
     MENU_TYPE_LIST, SPEED, NOT_SHOW, UNLINEAR, OLED_UI_FONT_12,
     &MainMenuPage, TimeMenuItems, 0, TimeAuxFunc,
-    {0, 0, 128, 64}, 0, 0, 0, 0,
-    0, 0, 0, 0,
-    0, 0, {0, 0}
-};
-
-
-/* ================= 串口页（0 菜单项） ================= */
-/* USB-CDC 虚拟串口：PC 发送 -> OLED 终端式滚动显示
- * 前置：实体屏模式(VIRTUAL_OLED=0)+usb_init() 已在 main.c 初始化
- * 软件驱动：usb_OUT_callback() ISR 搬包入接收环形缓冲，已实现在 OLED_UI_Driver.c
- * 终端区：6 行×21 字符(128/6)，\n 换行 / 超21折行 / \r \t 等处理
- * 状态行：USB 连接状态 + 累计接收字节数 */
-static MenuItem SerialMenuItems[] = {
-    {NULL}
-};
-
-#if !VIRTUAL_OLED
-#define SERIAL_ROWS      6      /* 终端区行数 */
-#define SERIAL_COLS      21     /* 每行字符数(128/6) */
-#define SERIAL_ROW_H     8      /* 6x8 字体行高 */
-#define SERIAL_TERM_Y0   0      /* 终端区起始 Y */
-#define SERIAL_STAT_Y    56     /* 状态行 Y（屏底56..63） */
-
-static uint8_t xdata Ser_LineBuf[SERIAL_ROWS][SERIAL_COLS + 1]; /* 显示缓冲：+1为尾0 */
-static uint8_t Ser_CurRow = 0;   /* 当前入字行下标(0..ROWS-1) */
-static uint8_t Ser_CurCol = 0;   /* 当前入字列下标(0..COLS) */
-static uint8_t Ser_ScrollTop = 0;/* 滚动顶部行下标（最新行=底部） */
-static uint8_t Ser_LastKey = 0;  /* 按键去重 */
-static uint8_t Ser_GbkPending = 0;/* GBK 次字节待丢弃标记 */
-
-/* 显缓冲置空（登入终端时调用） */
-static void Ser_Reset(void)
-{
-    uint8_t r, c;
-    for(r = 0; r < SERIAL_ROWS; r++){
-        for(c = 0; c <= SERIAL_COLS; c++) Ser_LineBuf[r][c] = 0;
-    }
-    Ser_CurRow = 0;
-    Ser_CurCol = 0;
-    Ser_ScrollTop = 0;
-    Ser_GbkPending = 0;
-}
-
-/* 换新行：封尾当前行，光标移到下一行，更新滚动顶 */
-static void Ser_NewLine(void)
-{
-    Ser_LineBuf[Ser_CurRow][SERIAL_COLS] = 0;
-    Ser_CurCol = 0;
-    Ser_CurRow = (uint8_t)(Ser_CurRow + 1) % SERIAL_ROWS;
-    Ser_ScrollTop = Ser_CurRow;  /* 新成最新行（底部） */
-}
-
-/* 入字符处理：更新当前行，满行自动起新行 */
-static void Ser_PutChar(uint8_t ch)
-{
-    if(Ser_GbkPending){ Ser_GbkPending = 0; return; }   /* GBK 次字节丢弃 */
-    if(ch >= 0x81){ Ser_GbkPending = 1; ch = (uint8_t)'?'; }  /* GBK 首字节：1 位占位 */
-    if(ch == 0x0D){ return; }                  /* \r 忽略(兼容 \r\n) */
-    if(ch == 0x09){ ch = (uint8_t)' '; }        /* \t 当1空格 */
-    else if(ch < 0x20 && ch != 0x0A){ return; } /* 其他<0x20 忽略 */
-
-    if(ch == 0x0A){ Ser_NewLine(); return; }    /* \n 换行 */
-
-    if(Ser_CurCol >= SERIAL_COLS){ Ser_NewLine(); }  /* 超21折行 */
-    Ser_LineBuf[Ser_CurRow][Ser_CurCol] = ch;
-    Ser_CurCol++;
-    Ser_LineBuf[Ser_CurRow][Ser_CurCol] = 0;   /* 即时尾0，保显示可见 */
-}
-
-/* 每帧调用：取出接收环形中所有新字节(Q7) + 按键 + 绘制 */
-static void SerialAuxFunc(void)
-{
-    uint8_t ok, ch, row, top, drawrow;
-    uint16_t total;
-    uint8_t k;
-
-    /* 消费接收缓冲：顺序取出所有新字节 */
-    /* 取出环形缓冲所有新字节喂显示状态机（USB ISR 回调已搬包入缓冲） */
-    do{
-        ch = Serial_GetByte(&ok);
-        if(ok){ Ser_PutChar(ch); }
-    }while(ok);
-
-    /* 按键：返回键退出（其他键无操作 Q1-b） */
-    k = Key_GetRawKey();
-    if(k != 0 && Ser_LastKey == 0){
-        if(k == 4){ OLED_UI_Back(); }
-    }
-    Ser_LastKey = k;
-
-    /* 绘制终端区：6 行，最新行在底部 */
-    for(row = 0; row < SERIAL_ROWS; row++){
-        top = (uint8_t)(Ser_ScrollTop + 256 - (SERIAL_ROWS - 1) + row);
-        drawrow = (uint8_t)(top % SERIAL_ROWS);
-        OLED_ShowString(0, SERIAL_TERM_Y0 + row * SERIAL_ROW_H,
-                       (char*)Ser_LineBuf[drawrow], OLED_6X8_HALF);
-    }
-
-    /* 状态行：USB 连接 + 累计字节（uint16_t 用 %u 需 (unsigned) 强转） */
-    total = Serial_RxTotal;
-    OLED_Printf(0, SERIAL_STAT_Y, OLED_6X8_HALF, "USB:%s RX:%u",
-                Serial_IsConnected() ? "OK" : "--", (unsigned int)total);
-}
-#else  /* VIRTUAL_OLED */
-/* 虚拟屏模式：无 CDC 串口（CDC 被虚拟 OLED 占用），给出提示 */
-static uint8_t Ser_LastKey_vm = 0;
-static void SerialAuxFunc(void)
-{
-    uint8_t k;
-    k = Key_GetRawKey();
-    if(k != 0 && Ser_LastKey_vm == 0){ if(k == 4){ OLED_UI_Back(); } }
-    Ser_LastKey_vm = k;
-    OLED_ShowString(8, 28, "Virtual OLED: no CDC", OLED_6X8_HALF);
-    OLED_ShowString(20, 40, "use VIRTUAL_OLED=0", OLED_6X8_HALF);
-}
-#endif /* VIRTUAL_OLED */
-
-MenuPage SerialMenuPage = {
-    MENU_TYPE_LIST, SPEED, NOT_SHOW, UNLINEAR, OLED_UI_FONT_12,
-    &MainMenuPage, SerialMenuItems, 0, SerialAuxFunc,
     {0, 0, 128, 64}, 0, 0, 0, 0,
     0, 0, 0, 0,
     0, 0, {0, 0}

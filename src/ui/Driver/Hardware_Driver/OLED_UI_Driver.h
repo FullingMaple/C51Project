@@ -38,13 +38,3 @@ void     Buzzer_Beep(void);         /* 触发一次短鸣（受 SoundEnable 控�
 extern bool SoundEnable;            /* 提示音总开关（OLED_UI_MenuData 绑定） */
 
 #endif
-/* ================= 串口通信：USB-CDC 接收引擎（实体屏模式） ================= */
-#if !VIRTUAL_OLED
-void    Serial_Init(void);
-uint8_t Serial_GetByte(uint8_t *ok);
-uint8_t Serial_IsConnected(void);
-extern uint8_t xdata Serial_RxBuf[];
-extern volatile uint8_t Serial_RxHead;
-extern uint8_t Serial_RxTail;
-extern volatile uint16_t Serial_RxTotal;
-#endif
